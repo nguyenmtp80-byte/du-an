@@ -1,0 +1,42 @@
+# Flutter
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+.idea/
+.vscode/
+
+# Dart/Flutter temp
+*.log
+*.lock
+
+# Android
+**/android/**/build/
+**/android/**/captures/
+
+# iOS
+**/ios/Pods/
+**/ios/Runner.xcworkspace/
+**/ios/Flutter/Flutter.framework/
+
+# Java / Maven
+target/
+*.iml
+.settings/
+*.class
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Node
+node_modules/
+
+# IntelliJ
+out/
+
+# Local env
+.env
