@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "MarketplaceApplication",
+            "request": "launch",
+            "mainClass": "MarketplaceApplication",
+            "projectName": "marketplace"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-MarketplaceApplication<marketplace>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "market.campus.com.MarketplaceApplication",
+            "projectName": "marketplace",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
