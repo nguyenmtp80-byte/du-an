@@ -40,3 +40,6 @@ out/
 
 # Local env
 .env
+
+# Git backup directories created during submodule conversion
+.git.backup

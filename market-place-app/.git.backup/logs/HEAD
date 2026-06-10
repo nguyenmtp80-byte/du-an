@@ -1,8 +1,0 @@
-0000000000000000000000000000000000000000 9d2134a5f8b94eb69691d7fd67dd8935d921ba79 Tirs <nguyenmtp80@gmail.com> 1780880179 +0700	clone: from https://github.com/nguyenmtp80-byte/market-place-app.git
-9d2134a5f8b94eb69691d7fd67dd8935d921ba79 8ed919f8b0f44499fe558b4d4c99702f673c07fa Tirs <nguyenmtp80@gmail.com> 1780880757 +0700	commit: new
-8ed919f8b0f44499fe558b4d4c99702f673c07fa 8ed919f8b0f44499fe558b4d4c99702f673c07fa Tirs <nguyenmtp80@gmail.com> 1780881113 +0700	checkout: moving from main to appmod/java-upgrade-20260608010923
-8ed919f8b0f44499fe558b4d4c99702f673c07fa 8ed919f8b0f44499fe558b4d4c99702f673c07fa Tirs <nguyenmtp80@gmail.com> 1780882368 +0700	checkout: moving from appmod/java-upgrade-20260608010923 to main
-8ed919f8b0f44499fe558b4d4c99702f673c07fa ea3170c7a63fb22a83c7162cf56763cd106d7bc2 Tirs <nguyenmtp80@gmail.com> 1780931343 +0700	commit: chua-ket-noi-db
-ea3170c7a63fb22a83c7162cf56763cd106d7bc2 ceb4b8e0026d5d3cd69ba9dbb88196d92296141b Tirs <nguyenmtp80@gmail.com> 1780982111 +0700	commit: ket-noi-db
-ceb4b8e0026d5d3cd69ba9dbb88196d92296141b c2b89ed2c74e7c5578e0a772cbff89d2294e7ece Tirs <nguyenmtp80@gmail.com> 1780982237 +0700	pull: Merge made by the 'ort' strategy.
-c2b89ed2c74e7c5578e0a772cbff89d2294e7ece 0ed4709e9f806b2a1091384ea888e855afd16247 Tirs <nguyenmtp80@gmail.com> 1781019009 +0700	commit: feat/register-login-logout
