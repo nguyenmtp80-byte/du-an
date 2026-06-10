@@ -1,0 +1,177 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../providers/auth_provider.dart';
+import '../../theme/app_theme.dart';
+import '../../utils/validators.dart';
+import '../../widgets/auth_divider.dart';
+import '../../widgets/auth_illustration.dart';
+import '../../widgets/auth_text_field.dart';
+import '../../widgets/google_sign_in_button.dart';
+import '../../widgets/primary_button.dart';
+import 'register_screen.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSubmit() async {
+    final auth = context.read<AuthProvider>();
+    auth.clearError();
+
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final success = await auth.login(
+      email: _emailController.text,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (!success && auth.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.errorMessage!)),
+      );
+    }
+  }
+
+  void _showGoogleComingSoon() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Đăng nhập Google sẽ được tích hợp sau.'),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const AuthIllustration(),
+                const SizedBox(height: 24),
+                const Text(
+                  'Chào mừng trở lại',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.gray900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Đăng nhập vào chợ sinh viên của bạn',
+                  style: TextStyle(fontSize: 14, color: AppColors.gray500),
+                ),
+                const SizedBox(height: 32),
+                AuthTextField(
+                  controller: _emailController,
+                  hintText: 'Email sinh viên',
+                  prefixIcon: Icons.mail_outline,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  validator: Validators.email,
+                ),
+                const SizedBox(height: 16),
+                AuthTextField(
+                  controller: _passwordController,
+                  hintText: 'Mật khẩu',
+                  prefixIcon: Icons.lock_outline,
+                  obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  validator: Validators.password,
+                  onFieldSubmitted: (_) => _handleSubmit(),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Tính năng quên mật khẩu sẽ có sau.'),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      'Quên mật khẩu?',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                PrimaryButton(
+                  label: 'Đăng nhập',
+                  isLoading: auth.isLoading,
+                  onPressed: _handleSubmit,
+                ),
+                const SizedBox(height: 32),
+                const AuthDivider(),
+                const SizedBox(height: 24),
+                GoogleSignInButton(onPressed: _showGoogleComingSoon),
+                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Chưa có tài khoản? ',
+                      style: TextStyle(fontSize: 14, color: AppColors.gray500),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const RegisterScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Tạo tài khoản mới',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

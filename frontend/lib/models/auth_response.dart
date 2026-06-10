@@ -1,0 +1,18 @@
+import 'user.dart';
+
+class AuthResponse {
+  const AuthResponse({
+    required this.token,
+    required this.user,
+  });
+
+  final String token;
+  final User user;
+
+  factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    return AuthResponse(
+      token: json['token'] as String? ?? json['accessToken'] as String? ?? '',
+      user: User.fromJson(json['user'] as Map<String, dynamic>? ?? {}),
+    );
+  }
+}
