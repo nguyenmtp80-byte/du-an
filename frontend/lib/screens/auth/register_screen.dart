@@ -5,7 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/validators.dart';
 import '../../widgets/auth_divider.dart';
-import '../../widgets/auth_illustration.dart';
+import '../../widgets/auth_hero_header.dart';
 import '../../widgets/auth_text_field.dart';
 import '../../widgets/google_sign_in_button.dart';
 import '../../widgets/primary_button.dart';
@@ -82,128 +82,122 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.gray900),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const AuthIllustration(),
-                const SizedBox(height: 24),
-                const Text(
-                  'Tạo tài khoản',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.gray900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Tạo tài khoản để mua và bán',
-                  style: TextStyle(fontSize: 14, color: AppColors.gray500),
-                ),
-                const SizedBox(height: 32),
-                AuthTextField(
-                  controller: _fullNameController,
-                  hintText: 'Họ và tên',
-                  prefixIcon: Icons.person_outline,
-                  textInputAction: TextInputAction.next,
-                  validator: Validators.fullName,
-                ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _emailController,
-                  hintText: 'Email sinh viên',
-                  prefixIcon: Icons.mail_outline,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  validator: Validators.email,
-                ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _phoneController,
-                  hintText: 'Số điện thoại',
-                  prefixIcon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                  validator: Validators.phone,
-                ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _studentIdController,
-                  hintText: 'Mã sinh viên (tuỳ chọn)',
-                  prefixIcon: Icons.badge_outlined,
-                  textInputAction: TextInputAction.next,
-                ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _passwordController,
-                  hintText: 'Mật khẩu',
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: true,
-                  textInputAction: TextInputAction.next,
-                  validator: Validators.password,
-                ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _confirmPasswordController,
-                  hintText: 'Xác nhận mật khẩu',
-                  prefixIcon: Icons.lock_reset_outlined,
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  validator: (value) => Validators.confirmPassword(
-                    value,
-                    _passwordController.text,
-                  ),
-                  onFieldSubmitted: (_) => _handleSubmit(),
-                ),
-                const SizedBox(height: 24),
-                PrimaryButton(
-                  label: 'Đăng ký',
-                  isLoading: auth.isLoading,
-                  onPressed: _handleSubmit,
-                ),
-                const SizedBox(height: 32),
-                const AuthDivider(),
-                const SizedBox(height: 24),
-                GoogleSignInButton(onPressed: _showGoogleComingSoon),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+      body: Column(
+        children: [
+          const AuthHeroHeader(showBackButton: true),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      'Đã có tài khoản? ',
+                      'Tạo tài khoản mới',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.gray900,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Điền thông tin để tham gia cộng đồng mua bán',
                       style: TextStyle(fontSize: 14, color: AppColors.gray500),
                     ),
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        'Đăng nhập',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primary,
-                        ),
+                    const SizedBox(height: 24),
+                    AuthTextField(
+                      controller: _fullNameController,
+                      hintText: 'Họ và tên',
+                      prefixIcon: Icons.person_outline,
+                      textInputAction: TextInputAction.next,
+                      validator: Validators.fullName,
+                    ),
+                    const SizedBox(height: 16),
+                    AuthTextField(
+                      controller: _emailController,
+                      hintText: 'Email sinh viên',
+                      prefixIcon: Icons.mail_outline,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      validator: Validators.email,
+                    ),
+                    const SizedBox(height: 16),
+                    AuthTextField(
+                      controller: _phoneController,
+                      hintText: 'Số điện thoại',
+                      prefixIcon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.next,
+                      validator: Validators.phone,
+                    ),
+                    const SizedBox(height: 16),
+                    AuthTextField(
+                      controller: _studentIdController,
+                      hintText: 'Mã sinh viên (tuỳ chọn)',
+                      prefixIcon: Icons.badge_outlined,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 16),
+                    AuthTextField(
+                      controller: _passwordController,
+                      hintText: 'Mật khẩu',
+                      prefixIcon: Icons.lock_outline,
+                      obscureText: true,
+                      textInputAction: TextInputAction.next,
+                      validator: Validators.password,
+                    ),
+                    const SizedBox(height: 16),
+                    AuthTextField(
+                      controller: _confirmPasswordController,
+                      hintText: 'Xác nhận mật khẩu',
+                      prefixIcon: Icons.lock_reset_outlined,
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      validator: (value) => Validators.confirmPassword(
+                        value,
+                        _passwordController.text,
                       ),
+                      onFieldSubmitted: (_) => _handleSubmit(),
+                    ),
+                    const SizedBox(height: 24),
+                    PrimaryButton(
+                      label: 'Đăng ký',
+                      isLoading: auth.isLoading,
+                      onPressed: _handleSubmit,
+                    ),
+                    const SizedBox(height: 16),
+                    const AuthDivider(),
+                    const SizedBox(height: 16),
+                    GoogleSignInButton(onPressed: _showGoogleComingSoon),
+                    const SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Đã có tài khoản? ',
+                          style: TextStyle(fontSize: 14, color: AppColors.gray500),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: const Text(
+                            'Đăng nhập',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

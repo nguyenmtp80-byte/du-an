@@ -5,7 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/validators.dart';
 import '../../widgets/auth_divider.dart';
-import '../../widgets/auth_illustration.dart';
+import '../../widgets/auth_hero_header.dart';
 import '../../widgets/auth_text_field.dart';
 import '../../widgets/google_sign_in_button.dart';
 import '../../widgets/primary_button.dart';
@@ -67,110 +67,113 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const AuthIllustration(),
-                const SizedBox(height: 24),
-                const Text(
-                  'Chào mừng trở lại',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.gray900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Đăng nhập vào chợ sinh viên của bạn',
-                  style: TextStyle(fontSize: 14, color: AppColors.gray500),
-                ),
-                const SizedBox(height: 32),
-                AuthTextField(
-                  controller: _emailController,
-                  hintText: 'Email sinh viên',
-                  prefixIcon: Icons.mail_outline,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  validator: Validators.email,
-                ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _passwordController,
-                  hintText: 'Mật khẩu',
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  validator: Validators.password,
-                  onFieldSubmitted: (_) => _handleSubmit(),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Tính năng quên mật khẩu sẽ có sau.'),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Quên mật khẩu?',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                PrimaryButton(
-                  label: 'Đăng nhập',
-                  isLoading: auth.isLoading,
-                  onPressed: _handleSubmit,
-                ),
-                const SizedBox(height: 32),
-                const AuthDivider(),
-                const SizedBox(height: 24),
-                GoogleSignInButton(onPressed: _showGoogleComingSoon),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+      body: Column(
+        children: [
+          const AuthHeroHeader(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      'Chưa có tài khoản? ',
-                      style: TextStyle(fontSize: 14, color: AppColors.gray500),
+                      'Chào mừng trở lại!',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.gray900,
+                      ),
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const RegisterScreen(),
+                    const SizedBox(height: 24),
+                    AuthTextField(
+                      controller: _emailController,
+                      hintText: 'Email sinh viên',
+                      prefixIcon: Icons.mail_outline,
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      validator: Validators.email,
+                    ),
+                    const SizedBox(height: 16),
+                    AuthTextField(
+                      controller: _passwordController,
+                      hintText: 'Mật khẩu',
+                      prefixIcon: Icons.lock_outline,
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      validator: Validators.password,
+                      onFieldSubmitted: (_) => _handleSubmit(),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Tính năng quên mật khẩu sẽ có sau.'),
+                            ),
+                          );
+                        },
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Quên mật khẩu?',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.primary,
                           ),
-                        );
-                      },
-                      child: const Text(
-                        'Tạo tài khoản mới',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.primary,
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    PrimaryButton(
+                      label: 'Đăng nhập',
+                      isLoading: auth.isLoading,
+                      onPressed: _handleSubmit,
+                    ),
+                    const SizedBox(height: 16),
+                    const AuthDivider(),
+                    const SizedBox(height: 16),
+                    GoogleSignInButton(onPressed: _showGoogleComingSoon),
+                    const SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Chưa có tài khoản? ',
+                          style: TextStyle(fontSize: 14, color: AppColors.gray500),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const RegisterScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'Tạo tài khoản mới',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -17,7 +17,7 @@ class GoogleSignInButton extends StatelessWidget {
           backgroundColor: Colors.white,
           foregroundColor: AppColors.gray700,
           side: const BorderSide(color: AppColors.gray200),
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -25,11 +25,11 @@ class GoogleSignInButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _GoogleIcon(),
-            const SizedBox(width: 8),
+            const _GoogleIcon(),
+            const SizedBox(width: 12),
             const Text(
-              'Đăng nhập với Google',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              'Google',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -39,9 +39,11 @@ class GoogleSignInButton extends StatelessWidget {
 }
 
 class _GoogleIcon extends StatelessWidget {
+  const _GoogleIcon();
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return const SizedBox(
       width: 20,
       height: 20,
       child: CustomPaint(painter: _GoogleLogoPainter()),
@@ -50,6 +52,8 @@ class _GoogleIcon extends StatelessWidget {
 }
 
 class _GoogleLogoPainter extends CustomPainter {
+  const _GoogleLogoPainter();
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill;

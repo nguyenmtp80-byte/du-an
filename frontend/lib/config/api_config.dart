@@ -25,4 +25,15 @@ class ApiConfig {
   static const String loginEndpoint = '/auth/login';
   static const String registerEndpoint = '/auth/register';
   static const String logoutEndpoint = '/auth/logout';
+
+  static const String productsEndpoint = '/products';
+  static String productDetailEndpoint(String productId) => '/products/$productId';
+  static const String cartAddEndpoint = '/cart/add';
+  static const String cartEndpoint = '/cart';
+  static const String cartUpdateEndpoint = '/cart/update';
+  static String cartDeleteEndpoint(String cartItemId) => '/cart/$cartItemId';
+  static const String orderCreateEndpoint = '/orders/create';
+
+  /// ID sản phẩm mẫu trong `TEST_CASES.md` — dùng fallback khi BE chưa có GET /products.
+  static const List<String> devProductIds = ['prod-1', 'prod-2', 'prod-3'];
 }
