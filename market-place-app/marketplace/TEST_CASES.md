@@ -32,7 +32,7 @@ VALUES
 ```
 
 ---
-
+flutter run 
 ## Test Cases
 
 ### 1. Product Detail API

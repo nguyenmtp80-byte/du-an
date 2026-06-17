@@ -8,13 +8,14 @@ import market.campus.com.exception.InvalidDataException;
 import market.campus.com.exception.ResourceNotFoundException;
 import market.campus.com.model.*;
 import market.campus.com.model.enums.ProductStatus;
-import market.campus.com.repository.CartItemRepository;
 import market.campus.com.repository.CartRepository;
 import market.campus.com.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,19 +25,7 @@ public class CartService {
     private CartRepository cartRepository;
 
     @Autowired
-    private CartItemRepository cartItemRepository;
-
-    @Autowired
     private ProductRepository productRepository;
-
-    // Tạo giỏ hàng mới cho user
-    public Cart getOrCreateCart(User user) {
-        return cartRepository.findByUser(user)
-                .orElseGet(() -> {
-                    Cart newCart = new Cart(user);
-                    return cartRepository.save(newCart);
-                });
-    }
 
     // Thêm sản phẩm vào giỏ hàng
     @Transactional
@@ -47,33 +36,30 @@ public class CartService {
                 .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
 
         // Kiểm tra sản phẩm có sẵn hay không
-        if (product.getStatus() == ProductStatus.SOLD_OUT) {
+        if (product.getStatus() == ProductStatus.sold) {
             throw new InvalidDataException("Sản phẩm đã hết hàng");
         }
 
-        Cart cart = getOrCreateCart(user);
-
-        // Kiểm tra sản phẩm đã trong giỏ chưa
-        CartItem existingItem = cartItemRepository.findByCartAndProduct(cart, product)
+        // Kiểm tra sản phẩm đã trong giỏ chưa (flat cart: mỗi user-product là 1 row)
+        Cart existingCart = cartRepository.findByUserAndProduct(user, product)
                 .orElse(null);
 
-        if (existingItem != null) {
+        if (existingCart != null) {
             // Tăng số lượng nếu sản phẩm đã tồn tại
-            int newQuantity = existingItem.getQuantity() + request.getQuantity();
-            existingItem.setQuantity(newQuantity);
-            BigDecimal newSubtotal = product.getPrice().multiply(BigDecimal.valueOf(newQuantity));
-            existingItem.setSubtotal(newSubtotal);
-            cartItemRepository.save(existingItem);
+            int newQuantity = existingCart.getQuantity() + request.getQuantity();
+            existingCart.setQuantity(newQuantity);
+            cartRepository.save(existingCart);
         } else {
             // Tạo item mới
-            BigDecimal subtotal = product.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
-            CartItem cartItem = new CartItem(cart, product, request.getQuantity(), subtotal);
-            cartItemRepository.save(cartItem);
+            Cart cartItem = new Cart();
+            cartItem.setId(UUID.randomUUID().toString());
+            cartItem.setUser(user);
+            cartItem.setProduct(product);
+            cartItem.setQuantity(request.getQuantity());
+            cartRepository.save(cartItem);
         }
 
-        // Cập nhật tổng tiền giỏ hàng
-        updateCartTotal(cart);
-        return getCartResponse(cart);
+        return getCartResponse(user);
     }
 
     // Cập nhật số lượng sản phẩm
@@ -81,79 +67,65 @@ public class CartService {
     public CartResponse updateCartItem(User user, UpdateCartItemRequest request) {
         validateQuantity(request.getQuantity());
 
-        CartItem cartItem = cartItemRepository.findById(request.getCartItemId())
+        Cart cartItem = cartRepository.findById(request.getCartItemId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm trong giỏ không tồn tại"));
 
-        // Kiểm tra item này thuộc giỏ của user hiện tại
-        if (!cartItem.getCart().getUser().getId().equals(user.getId())) {
+        // Kiểm tra item này thuộc user hiện tại
+        if (!cartItem.getUser().getId().equals(user.getId())) {
             throw new InvalidDataException("Không có quyền cập nhật");
         }
 
-        Product product = cartItem.getProduct();
         cartItem.setQuantity(request.getQuantity());
-        BigDecimal newSubtotal = product.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()));
-        cartItem.setSubtotal(newSubtotal);
-        cartItemRepository.save(cartItem);
+        cartRepository.save(cartItem);
 
-        // Cập nhật tổng tiền giỏ hàng
-        updateCartTotal(cartItem.getCart());
-        return getCartResponse(cartItem.getCart());
+        return getCartResponse(user);
     }
 
     // Xóa sản phẩm khỏi giỏ hàng
     @Transactional
     public CartResponse removeFromCart(User user, String cartItemId) {
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
+        Cart cartItem = cartRepository.findById(cartItemId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm trong giỏ không tồn tại"));
 
-        // Kiểm tra item này thuộc giỏ của user hiện tại
-        if (!cartItem.getCart().getUser().getId().equals(user.getId())) {
+        // Kiểm tra item này thuộc user hiện tại
+        if (!cartItem.getUser().getId().equals(user.getId())) {
             throw new InvalidDataException("Không có quyền xóa");
         }
 
-        Cart cart = cartItem.getCart();
-        cartItemRepository.delete(cartItem);
-
-        // Cập nhật tổng tiền giỏ hàng
-        updateCartTotal(cart);
-        return getCartResponse(cart);
+        cartRepository.delete(cartItem);
+        return getCartResponse(user);
     }
 
     // Lấy giỏ hàng
     public CartResponse getCart(User user) {
-        Cart cart = getOrCreateCart(user);
-        return getCartResponse(cart);
+        return getCartResponse(user);
     }
 
-    // Cập nhật tổng tiền giỏ hàng
-    private void updateCartTotal(Cart cart) {
-        BigDecimal total = cart.getItems().stream()
-                .map(CartItem::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        cart.setTotalAmount(total);
-        cartRepository.save(cart);
-    }
+    // Convert List<Cart> to CartResponse
+    private CartResponse getCartResponse(User user) {
+        List<Cart> cartItems = cartRepository.findByUser(user);
 
-    // Convert Cart to CartResponse
-    private CartResponse getCartResponse(Cart cart) {
-        var items = cart.getItems().stream()
+        var items = cartItems.stream()
                 .map(item -> new CartItemResponse(
                         item.getId(),
                         item.getProduct().getId(),
-                        item.getProduct().getName(),
+                        item.getProduct().getTitle(),
                         item.getProduct().getPrice(),
-                        item.getProduct().getImages().isEmpty() ? null : 
-                            item.getProduct().getImages().get(0).getImageUrl(),
+                        item.getProduct().getFirstImageUrl(),
                         item.getQuantity(),
-                        item.getSubtotal()
+                        item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity()))
                 ))
                 .collect(Collectors.toList());
 
+        BigDecimal totalAmount = items.stream()
+                .map(CartItemResponse::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         return new CartResponse(
-                cart.getId(),
+                user.getId(),
                 items,
                 items.size(),
-                cart.getTotalAmount()
+                totalAmount
         );
     }
 
@@ -164,11 +136,10 @@ public class CartService {
         }
     }
 
-    // Xóa toàn bộ giỏ hàng (dùng cho checkout)
+    // Xóa toàn bộ giỏ hàng của user (dùng cho checkout)
     @Transactional
-    public void clearCart(Cart cart) {
-        cart.getItems().clear();
-        cart.setTotalAmount(BigDecimal.ZERO);
-        cartRepository.save(cart);
+    public void clearCart(User user) {
+        List<Cart> cartItems = cartRepository.findByUser(user);
+        cartRepository.deleteAll(cartItems);
     }
 }
