@@ -7,10 +7,12 @@ class ScreenHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.onBack,
+    this.showBackButton = true,
   });
 
   final String title;
   final VoidCallback? onBack;
+  final bool showBackButton;
 
   @override
   Widget build(BuildContext context) {
@@ -33,21 +35,24 @@ class ScreenHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Material(
-            color: AppColors.gray50,
-            shape: const CircleBorder(),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: onBack ?? () => Navigator.of(context).pop(),
-              customBorder: const CircleBorder(),
-              child: const SizedBox(
-                width: 40,
-                height: 40,
-                child: Icon(Icons.chevron_left, color: AppColors.gray900, size: 28),
+          if (showBackButton)
+            Material(
+              color: AppColors.gray50,
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: onBack ?? () => Navigator.of(context).pop(),
+                customBorder: const CircleBorder(),
+                child: const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Icon(Icons.chevron_left, color: AppColors.gray900, size: 28),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 16),
+            )
+          else
+            const SizedBox(width: 4),
+          if (showBackButton) const SizedBox(width: 16),
           Text(
             title,
             style: const TextStyle(

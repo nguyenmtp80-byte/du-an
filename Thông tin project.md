@@ -366,7 +366,15 @@ Có tách logic khỏi UI.
 Có cập nhật UI theo state.
  
 
+Chạy BE: 
+cd D:\Git_Push\du-an\market-place-app\marketplace
+.\mvnw.cmd spring-boot:run
 
+Chạy FE trên Chrome: 
+cd D:\Git_Push\du-an\frontend
+flutter run -d chrome --web-browser-flag=--disable-web-security --web-browser-flag=--user-data-dir=C:/temp/flutter_chrome_dev
 
-
+Chạy FE trên android thật: 
+cd D:\Git_Push\du-an\frontend
+flutter run
 

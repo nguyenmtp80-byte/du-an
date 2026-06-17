@@ -19,6 +19,8 @@ class CartProvider extends ChangeNotifier {
   Cart get cart => _cart;
   List<CartItem> get items => _cart.items;
   int get totalItems => _cart.totalItems;
+  int get totalQuantity =>
+      _cart.items.fold(0, (sum, item) => sum + item.quantity);
   double get totalAmount => _cart.totalAmount;
   bool get isEmpty => _cart.isEmpty;
   bool get isLoading => _isLoading;

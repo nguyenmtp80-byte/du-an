@@ -6,7 +6,7 @@ import '../../providers/cart_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/product_card.dart';
-import '../cart/cart_screen.dart';
+import '../notifications/notifications_screen.dart';
 import '../product/product_detail_screen.dart';
 import '../product/product_filter_sheet.dart';
 
@@ -53,9 +53,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openCart() {
+  void _openNotifications() {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const CartScreen()),
+      MaterialPageRoute<void>(
+        builder: (_) => const NotificationsScreen(showBackButton: true),
+      ),
     );
   }
 
@@ -70,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final productProvider = context.watch<ProductProvider>();
-    final cartProvider = context.watch<CartProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.gray50,
@@ -85,9 +86,8 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverToBoxAdapter(child: _HomeHeader(
               searchController: _searchController,
               onFilterTap: _openFilterSheet,
+              onNotificationTap: _openNotifications,
               onSearchChanged: productProvider.setSearchQuery,
-              onCartTap: _openCart,
-              cartItemCount: cartProvider.totalItems,
             )),
             if (productProvider.isUsingDetailFallback)
               const SliverToBoxAdapter(child: _FallbackBanner()),
@@ -129,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
@@ -164,16 +164,14 @@ class _HomeHeader extends StatelessWidget {
   const _HomeHeader({
     required this.searchController,
     required this.onFilterTap,
+    required this.onNotificationTap,
     required this.onSearchChanged,
-    required this.onCartTap,
-    required this.cartItemCount,
   });
 
   final TextEditingController searchController;
   final VoidCallback onFilterTap;
+  final VoidCallback onNotificationTap;
   final ValueChanged<String> onSearchChanged;
-  final VoidCallback onCartTap;
-  final int cartItemCount;
 
   @override
   Widget build(BuildContext context) {
@@ -238,9 +236,8 @@ class _HomeHeader extends StatelessWidget {
               Row(
                 children: [
                   _HeaderIconButton(
-                    icon: Icons.shopping_cart_outlined,
-                    onTap: onCartTap,
-                    badgeCount: cartItemCount,
+                    icon: Icons.notifications_outlined,
+                    onTap: onNotificationTap,
                   ),
                   const SizedBox(width: 8),
                   _HeaderIconButton(
@@ -281,12 +278,10 @@ class _HeaderIconButton extends StatelessWidget {
   const _HeaderIconButton({
     required this.icon,
     required this.onTap,
-    this.badgeCount = 0,
   });
 
   final IconData icon;
   final VoidCallback onTap;
-  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -300,39 +295,7 @@ class _HeaderIconButton extends StatelessWidget {
         child: SizedBox(
           width: 40,
           height: 40,
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              Icon(icon, color: Colors.white, size: 20),
-              if (badgeCount > 0)
-                Positioned(
-                  right: 4,
-                  top: 4,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 18,
-                      minHeight: 18,
-                    ),
-                    child: Text(
-                      badgeCount > 9 ? '9+' : '$badgeCount',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        height: 1,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          child: Icon(icon, color: Colors.white, size: 20),
         ),
       ),
     );

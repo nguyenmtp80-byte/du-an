@@ -10,7 +10,14 @@ import '../../widgets/screen_header.dart';
 import '../checkout/checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
-  const CartScreen({super.key});
+  const CartScreen({
+    super.key,
+    this.embeddedInShell = false,
+    this.onStartShopping,
+  });
+
+  final bool embeddedInShell;
+  final VoidCallback? onStartShopping;
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -39,6 +46,11 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _goShopping() {
+    if (widget.onStartShopping != null) {
+      widget.onStartShopping!();
+      return;
+    }
+
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
@@ -51,7 +63,10 @@ class _CartScreenState extends State<CartScreen> {
       backgroundColor: AppColors.gray50,
       body: Column(
         children: [
-          ScreenHeader(title: 'Giỏ hàng'),
+          ScreenHeader(
+            title: 'Giỏ hàng',
+            showBackButton: !widget.embeddedInShell,
+          ),
           Expanded(
             child: cart.isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -99,6 +114,7 @@ class _CartScreenState extends State<CartScreen> {
               totalAmount: cart.totalAmount,
               itemCount: cart.items.length,
               onCheckout: _openCheckout,
+              extraBottomPadding: widget.embeddedInShell ? 72 : 0,
             ),
         ],
       ),
@@ -359,11 +375,13 @@ class _CheckoutBar extends StatelessWidget {
     required this.totalAmount,
     required this.itemCount,
     required this.onCheckout,
+    this.extraBottomPadding = 0,
   });
 
   final double totalAmount;
   final int itemCount;
   final VoidCallback onCheckout;
+  final double extraBottomPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -372,7 +390,7 @@ class _CheckoutBar extends StatelessWidget {
         24,
         20,
         24,
-        MediaQuery.paddingOf(context).bottom + 20,
+        MediaQuery.paddingOf(context).bottom + 20 + extraBottomPadding,
       ),
       decoration: BoxDecoration(
         color: Colors.white,

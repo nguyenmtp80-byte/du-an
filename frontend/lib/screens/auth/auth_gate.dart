@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
-import '../home/home_screen.dart';
+import '../shell/main_shell.dart';
 import 'login_screen.dart';
 
 /// Quyết định hiển thị Login hay Home dựa trên trạng thái đăng nhập.
@@ -20,7 +20,7 @@ class AuthGate extends StatelessWidget {
     }
 
     if (auth.isAuthenticated) {
-      return const HomeScreen();
+      return const MainShell();
     }
 
     return const LoginScreen();
