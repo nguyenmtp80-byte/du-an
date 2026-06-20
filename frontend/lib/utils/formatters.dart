@@ -33,10 +33,26 @@ String formatProductStatus(String status) {
     case 'AVAILABLE':
       return 'Còn hàng';
     case 'SOLD_OUT':
+    case 'SOLD':
       return 'Hết hàng';
     default:
       return status;
   }
+}
+
+bool productStatusMatchesFilter(String productStatus, String filterStatus) {
+  final product = productStatus.toLowerCase();
+  final filter = filterStatus.toLowerCase();
+
+  if (filter == 'available') {
+    return product == 'available';
+  }
+
+  if (filter == 'sold' || filter == 'sold_out') {
+    return product == 'sold' || product == 'sold_out';
+  }
+
+  return product == filter;
 }
 
 String formatRelativeDate(DateTime? dateTime) {

@@ -19,7 +19,7 @@ class CartItem {
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
-      id: json['id']?.toString() ?? '',
+      id: json['cartId']?.toString() ?? json['id']?.toString() ?? '',
       productId: json['productId']?.toString() ?? '',
       productName: json['productName'] as String? ?? '',
       productPrice: _parseAmount(json['productPrice']),
@@ -61,7 +61,7 @@ class Cart {
     final itemsJson = json['items'];
 
     return Cart(
-      cartId: json['cartId']?.toString() ?? '',
+      cartId: json['cartId']?.toString() ?? json['userId']?.toString() ?? '',
       items: itemsJson is List
           ? itemsJson
               .whereType<Map>()

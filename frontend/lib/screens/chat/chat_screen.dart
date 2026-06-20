@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
+import '../../utils/formatters.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,
-    this.partnerName = 'Sarah Chen',
-    this.partnerAvatarUrl =
-        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-    this.isOnline = true,
-    this.productName = 'MacBook Air M1 2020',
-    this.productImageUrl =
-        'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=600&h=600&fit=crop',
-    this.productPrice = 650,
+    required this.partnerName,
+    this.partnerAvatarUrl,
+    this.isOnline = false,
+    this.productName,
+    this.productImageUrl,
+    this.productPrice,
   });
 
   final String partnerName;
-  final String partnerAvatarUrl;
+  final String? partnerAvatarUrl;
   final bool isOnline;
-  final String productName;
-  final String productImageUrl;
-  final double productPrice;
+  final String? productName;
+  final String? productImageUrl;
+  final double? productPrice;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -28,28 +27,10 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
-  final _scrollController = ScrollController();
-
-  static const _mockMessages = [
-    _ChatMessage(
-      text: 'Chào bạn! MacBook vẫn còn nhé. Bạn có quan tâm không?',
-      isMine: false,
-    ),
-    _ChatMessage(
-      text:
-          'Chào Sarah! Có ạ. Chiều nay gặp ở Student Union để xem máy được không?',
-      isMine: true,
-    ),
-    _ChatMessage(
-      text: 'Được nhé! Mình sẽ có mặt lúc 3 giờ chiều. Bạn thấy ổn không?',
-      isMine: false,
-    ),
-  ];
 
   @override
   void dispose() {
     _messageController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -68,6 +49,11 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  bool get _hasProductPreview {
+    final name = widget.productName?.trim() ?? '';
+    return name.isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,32 +66,42 @@ class _ChatScreenState extends State<ChatScreen> {
             isOnline: widget.isOnline,
             onBack: () => Navigator.of(context).pop(),
           ),
-          _ProductPreviewCard(
-            productName: widget.productName,
-            productImageUrl: widget.productImageUrl,
-            productPrice: widget.productPrice,
-          ),
+          if (_hasProductPreview)
+            _ProductPreviewCard(
+              productName: widget.productName!,
+              productImageUrl: widget.productImageUrl,
+              productPrice: widget.productPrice,
+            ),
           Expanded(
-            child: ListView(
-              controller: _scrollController,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              children: [
-                const Center(
-                  child: Text(
-                    'Hôm nay 10:24',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.gray400,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.forum_outlined,
+                      size: 48,
+                      color: AppColors.gray400.withValues(alpha: 0.8),
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Chưa có tin nhắn',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.gray900,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Bắt đầu trò chuyện với người bán.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: AppColors.gray500),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                for (final message in _mockMessages)
-                  _MessageBubble(
-                    message: message,
-                    avatarUrl: widget.partnerAvatarUrl,
-                  ),
-              ],
+              ),
             ),
           ),
           _ChatInputBar(
@@ -118,13 +114,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-class _ChatMessage {
-  const _ChatMessage({required this.text, required this.isMine});
-
-  final String text;
-  final bool isMine;
-}
-
 class _ChatHeader extends StatelessWidget {
   const _ChatHeader({
     required this.partnerName,
@@ -134,12 +123,16 @@ class _ChatHeader extends StatelessWidget {
   });
 
   final String partnerName;
-  final String partnerAvatarUrl;
+  final String? partnerAvatarUrl;
   final bool isOnline;
   final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
+    final avatarUrl = partnerAvatarUrl?.trim() ?? '';
+    final avatarLabel =
+        partnerName.isNotEmpty ? partnerName[0].toUpperCase() : '?';
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         24,
@@ -178,8 +171,18 @@ class _ChatHeader extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: AppColors.gray200,
-                backgroundImage: NetworkImage(partnerAvatarUrl),
+                backgroundColor: AppColors.primaryLight,
+                backgroundImage:
+                    avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                child: avatarUrl.isEmpty
+                    ? Text(
+                        avatarLabel,
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : null,
               ),
               if (isOnline)
                 Positioned(
@@ -234,16 +237,18 @@ class _ChatHeader extends StatelessWidget {
 class _ProductPreviewCard extends StatelessWidget {
   const _ProductPreviewCard({
     required this.productName,
-    required this.productImageUrl,
-    required this.productPrice,
+    this.productImageUrl,
+    this.productPrice,
   });
 
   final String productName;
-  final String productImageUrl;
-  final double productPrice;
+  final String? productImageUrl;
+  final double? productPrice;
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = productImageUrl?.trim() ?? '';
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(12),
@@ -263,18 +268,25 @@ class _ProductPreviewCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              productImageUrl,
-              width: 48,
-              height: 48,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
-                width: 48,
-                height: 48,
-                color: AppColors.gray200,
-                child: const Icon(Icons.image_outlined, color: AppColors.gray400),
-              ),
-            ),
+            child: imageUrl.isEmpty
+                ? Container(
+                    width: 48,
+                    height: 48,
+                    color: AppColors.gray200,
+                    child: const Icon(Icons.image_outlined, color: AppColors.gray400),
+                  )
+                : Image.network(
+                    imageUrl,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Container(
+                      width: 48,
+                      height: 48,
+                      color: AppColors.gray200,
+                      child: const Icon(Icons.image_outlined, color: AppColors.gray400),
+                    ),
+                  ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -291,14 +303,15 @@ class _ProductPreviewCard extends StatelessWidget {
                     color: AppColors.gray900,
                   ),
                 ),
-                Text(
-                  '\$${productPrice.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                if (productPrice != null)
+                  Text(
+                    formatPrice(productPrice!),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -314,109 +327,6 @@ class _ProductPreviewCard extends StatelessWidget {
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: AppColors.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({
-    required this.message,
-    required this.avatarUrl,
-  });
-
-  final _ChatMessage message;
-  final String avatarUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    if (message.isMine) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Flexible(
-              child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: MediaQuery.sizeOf(context).width * 0.78,
-                ),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                    bottomLeft: Radius.circular(16),
-                    bottomRight: Radius.circular(4),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  message.text,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: AppColors.gray200,
-            backgroundImage: NetworkImage(avatarUrl),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.sizeOf(context).width * 0.78,
-              ),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                  bottomLeft: Radius.circular(4),
-                  bottomRight: Radius.circular(16),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Text(
-                message.text,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.gray900,
-                  height: 1.4,
-                ),
               ),
             ),
           ),

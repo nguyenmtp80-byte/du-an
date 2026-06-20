@@ -119,13 +119,13 @@ class _ProductFilterSheetState extends State<ProductFilterSheet> {
               ),
               FilterChip(
                 label: const Text('Còn hàng'),
-                selected: _selectedStatus == 'AVAILABLE',
-                onSelected: (_) => setState(() => _selectedStatus = 'AVAILABLE'),
+                selected: _selectedStatus == 'available',
+                onSelected: (_) => setState(() => _selectedStatus = 'available'),
               ),
               FilterChip(
                 label: const Text('Hết hàng'),
-                selected: _selectedStatus == 'SOLD_OUT',
-                onSelected: (_) => setState(() => _selectedStatus = 'SOLD_OUT'),
+                selected: _selectedStatus == 'sold',
+                onSelected: (_) => setState(() => _selectedStatus = 'sold'),
               ),
             ],
           ),

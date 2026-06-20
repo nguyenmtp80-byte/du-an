@@ -5,6 +5,7 @@ import '../models/product.dart';
 import '../repositories/product_repository.dart';
 import '../services/api_client.dart';
 import '../config/api_config.dart';
+import '../utils/formatters.dart';
 
 class ProductProvider extends ChangeNotifier {
   ProductProvider({ProductRepository? productRepository})
@@ -62,7 +63,7 @@ class ProductProvider extends ChangeNotifier {
           product.categoryName == _activeCategory;
 
       final matchesStatus = _statusFilter == null ||
-          product.status.toUpperCase() == _statusFilter!.toUpperCase();
+          productStatusMatchesFilter(product.status, _statusFilter!);
 
       final matchesMinPrice =
           _minPrice == null || product.price >= _minPrice!;
@@ -101,14 +102,13 @@ class ProductProvider extends ChangeNotifier {
       _listError = null;
       _isUsingDetailFallback = false;
     } on ApiException catch (error) {
-      if (error.statusCode == 404 || error.statusCode == 405) {
-        _products = await _productRepository.fetchProductsFromDetails(
-          ApiConfig.devProductIds,
-        );
-        _isUsingDetailFallback = _products.isNotEmpty;
-        _listError = _products.isEmpty ? _mapListError(error) : null;
+      final fallbackProducts = await _tryDetailFallback(error);
+      if (fallbackProducts != null) {
+        _products = fallbackProducts;
+        _isUsingDetailFallback = true;
+        _listError = null;
       } else {
-        _listError = error.message;
+        _listError = _friendlyListError(error);
         _products = [];
         _isUsingDetailFallback = false;
       }
@@ -202,10 +202,35 @@ class ProductProvider extends ChangeNotifier {
     await prefs.setStringList(_favoritesKey, _favoriteIds.toList());
   }
 
-  String _mapListError(ApiException error) {
-    if (error.statusCode == 404 || error.statusCode == 405) {
-      return 'Backend chưa có API GET /api/products.\n'
-          'Nhờ team BE thêm endpoint danh sách sản phẩm.';
+  Future<List<Product>?> _tryDetailFallback(ApiException error) async {
+    final shouldFallback = error.statusCode == 404 ||
+        error.statusCode == 405 ||
+        (error.statusCode != null && error.statusCode! >= 500) ||
+        _looksLikeServerListFailure(error.message);
+
+    if (!shouldFallback) {
+      return null;
+    }
+
+    final products = await _productRepository.fetchProductsFromDetails(
+      ApiConfig.devProductIds,
+    );
+
+    return products.isEmpty ? null : products;
+  }
+
+  bool _looksLikeServerListFailure(String message) {
+    final lower = message.toLowerCase();
+    return lower.contains('lỗi khi lấy danh sách sản phẩm') ||
+        lower.contains('jdbc') ||
+        lower.contains('column') ||
+        lower.contains('does not exist');
+  }
+
+  String _friendlyListError(ApiException error) {
+    if (_looksLikeServerListFailure(error.message)) {
+      return 'Không thể tải danh sách sản phẩm từ server.\n'
+          'Nhờ team BE kiểm tra API GET /api/products.';
     }
 
     return error.message;

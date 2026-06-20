@@ -53,6 +53,7 @@ class Product {
     required this.condition,
     required this.status,
     this.description,
+    this.locationName,
     this.images = const [],
     this.seller,
     this.createdAt,
@@ -65,6 +66,7 @@ class Product {
   final String categoryName;
   final String condition;
   final String status;
+  final String? locationName;
   final List<ProductImage> images;
   final SellerInfo? seller;
   final DateTime? createdAt;
@@ -84,33 +86,52 @@ class Product {
 
   String? get sellerAvatar => seller?.avatarUrl;
 
-  bool get isAvailable => status.toUpperCase() == 'AVAILABLE';
+  bool get isAvailable => status.toLowerCase() == 'available';
 
   factory Product.fromJson(Map<String, dynamic> json) {
-    final imagesJson = json['images'];
     final sellerJson = json['seller'];
 
     return Product(
       id: json['id']?.toString() ?? '',
-      name: json['name'] as String? ?? '',
+      name: json['title'] as String? ?? json['name'] as String? ?? '',
       description: json['description'] as String?,
       price: _parsePrice(json['price']),
-      categoryName: json['categoryName'] as String? ??
+      categoryName: json['category'] as String? ??
+          json['categoryName'] as String? ??
           json['category_name'] as String? ??
           '',
-      condition: json['condition'] as String? ?? '',
-      status: json['status'] as String? ?? 'AVAILABLE',
-      images: imagesJson is List
-          ? imagesJson
-              .whereType<Map>()
-              .map((item) => ProductImage.fromJson(Map<String, dynamic>.from(item)))
-              .toList()
-          : const [],
+      condition: json['condition']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'available',
+      locationName: json['locationName'] as String? ?? json['location_name'] as String?,
+      images: _parseImages(json),
       seller: sellerJson is Map<String, dynamic>
           ? SellerInfo.fromJson(sellerJson)
           : _sellerFromFlatFields(json),
       createdAt: _parseDateTime(json['createdAt'] ?? json['created_at']),
     );
+  }
+
+  static List<ProductImage> _parseImages(Map<String, dynamic> json) {
+    final imageUrls = json['imageUrls'] ?? json['image_urls'];
+    if (imageUrls is List) {
+      return imageUrls.asMap().entries.map((entry) {
+        return ProductImage(
+          id: 'img-${entry.key}',
+          imageUrl: entry.value.toString(),
+          displayOrder: entry.key + 1,
+        );
+      }).toList();
+    }
+
+    final imagesJson = json['images'];
+    if (imagesJson is List) {
+      return imagesJson
+          .whereType<Map>()
+          .map((item) => ProductImage.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+    }
+
+    return const [];
   }
 
   static SellerInfo? _sellerFromFlatFields(Map<String, dynamic> json) {

@@ -82,7 +82,7 @@ class _MainShellState extends State<MainShell> {
       bottomNavigationBar: _AppBottomNavBar(
         currentIndex: _currentIndex,
         cartBadgeCount: cartCount,
-        chatBadgeCount: 2,
+        chatBadgeCount: 0,
         onTabSelected: _onTabSelected,
       ),
     );

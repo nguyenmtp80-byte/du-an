@@ -55,6 +55,22 @@ class ProductRepository {
   }
 
   bool _shouldUseDetailFallback(ApiException error) {
-    return error.statusCode == 404 || error.statusCode == 405;
+    final code = error.statusCode;
+    if (code == null) {
+      return _looksLikeServerListFailure(error.message);
+    }
+
+    return code == 404 ||
+        code == 405 ||
+        code >= 500 ||
+        _looksLikeServerListFailure(error.message);
+  }
+
+  bool _looksLikeServerListFailure(String message) {
+    final lower = message.toLowerCase();
+    return lower.contains('lỗi khi lấy danh sách sản phẩm') ||
+        lower.contains('jdbc') ||
+        lower.contains('column') ||
+        lower.contains('does not exist');
   }
 }

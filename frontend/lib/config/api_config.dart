@@ -33,6 +33,8 @@ class ApiConfig {
   static const String cartUpdateEndpoint = '/cart/update';
   static String cartDeleteEndpoint(String cartItemId) => '/cart/$cartItemId';
   static const String orderCreateEndpoint = '/orders/create';
+  static const String ordersEndpoint = '/orders';
+  static String orderDetailEndpoint(String orderId) => '/orders/$orderId';
 
   /// ID sản phẩm mẫu trong `TEST_CASES.md` — dùng fallback khi BE chưa có GET /products.
   static const List<String> devProductIds = ['prod-1', 'prod-2', 'prod-3'];

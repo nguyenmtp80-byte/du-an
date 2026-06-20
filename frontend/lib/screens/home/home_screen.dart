@@ -316,7 +316,8 @@ class _FallbackBanner extends StatelessWidget {
         border: Border.all(color: AppColors.primarySoft),
       ),
       child: const Text(
-        'BE chưa có GET /api/products. Đang hiển thị sản phẩm mẫu (prod-1, prod-2, prod-3) từ API chi tiết.',
+        'GET /api/products đang lỗi phía BE. '
+        'Đang hiển thị sản phẩm mẫu (prod-1, prod-2, prod-3) từ API chi tiết.',
         style: TextStyle(fontSize: 12, color: AppColors.gray700, height: 1.4),
       ),
     );
