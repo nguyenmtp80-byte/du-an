@@ -12,6 +12,7 @@ import market.campus.com.model.enums.ProductStatus;
 import market.campus.com.repository.CartRepository;
 import market.campus.com.repository.OrderItemRepository;
 import market.campus.com.repository.OrderRepository;
+import market.campus.com.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,9 @@ public class OrderService {
     private CartRepository cartRepository;
 
     @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
     private CartService cartService;
 
     @Transactional
@@ -45,11 +49,19 @@ public class OrderService {
             throw new InvalidDataException("Giỏ hàng trống, không thể tạo đơn hàng");
         }
 
-        // Kiểm tra tất cả sản phẩm còn tồn tại và có trạng thái AVAILABLE
+        // Kiểm tra tất cả sản phẩm còn tồn tại và đủ tồn kho
         for (Cart item : cartItems) {
             Product product = item.getProduct();
             if (product.getStatus() != ProductStatus.available) {
                 throw new InvalidDataException("Sản phẩm " + product.getTitle() + " không còn sẵn");
+            }
+
+            int stock = product.getQuantity() != null ? product.getQuantity() : 0;
+            if (item.getQuantity() > stock) {
+                throw new InvalidDataException(
+                        "Số lượng trong giỏ vượt quá tồn kho sản phẩm "
+                                + product.getTitle() + " (còn " + stock + ")"
+                );
             }
         }
 
@@ -88,6 +100,16 @@ public class OrderService {
                     subtotal
             );
             orderItemRepository.save(orderItem);
+
+            // Trừ tồn kho sau khi đặt hàng thành công
+            Product product = cartItem.getProduct();
+            int remainingQuantity = (product.getQuantity() != null ? product.getQuantity() : 0)
+                    - cartItem.getQuantity();
+            product.setQuantity(Math.max(remainingQuantity, 0));
+            if (product.getQuantity() <= 0) {
+                product.setStatus(ProductStatus.sold);
+            }
+            productRepository.save(product);
         }
 
         // Xóa giỏ hàng

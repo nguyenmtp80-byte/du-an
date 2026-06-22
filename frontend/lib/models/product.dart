@@ -52,6 +52,7 @@ class Product {
     required this.categoryName,
     required this.condition,
     required this.status,
+    this.quantity = 0,
     this.description,
     this.locationName,
     this.images = const [],
@@ -66,6 +67,7 @@ class Product {
   final String categoryName;
   final String condition;
   final String status;
+  final int quantity;
   final String? locationName;
   final List<ProductImage> images;
   final SellerInfo? seller;
@@ -86,7 +88,8 @@ class Product {
 
   String? get sellerAvatar => seller?.avatarUrl;
 
-  bool get isAvailable => status.toLowerCase() == 'available';
+  bool get isAvailable =>
+      status.toLowerCase() == 'available' && quantity > 0;
 
   factory Product.fromJson(Map<String, dynamic> json) {
     final sellerJson = json['seller'];
@@ -102,6 +105,7 @@ class Product {
           '',
       condition: json['condition']?.toString() ?? '',
       status: json['status']?.toString() ?? 'available',
+      quantity: json['quantity'] as int? ?? 0,
       locationName: json['locationName'] as String? ?? json['location_name'] as String?,
       images: _parseImages(json),
       seller: sellerJson is Map<String, dynamic>

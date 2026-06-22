@@ -22,10 +22,10 @@ class _SellCondition {
 }
 
 const _categories = [
-  _SellCategory(label: 'Sách giáo trình', value: 'Textbooks'),
-  _SellCategory(label: 'Điện tử', value: 'Electronics'),
-  _SellCategory(label: 'Đồ dorm', value: 'Dorm'),
-  _SellCategory(label: 'Di chuyển', value: 'Transportation'),
+  _SellCategory(label: 'Điện tử', value: 'Điện tử'),
+  _SellCategory(label: 'Sách giáo trình', value: 'Sách giáo trình'),
+  _SellCategory(label: 'Đồ dùng', value: 'Đồ dùng'),
+  _SellCategory(label: 'Dịch vụ', value: 'Dịch vụ'),
 ];
 
 const _conditions = [
@@ -51,6 +51,7 @@ class _SellScreenState extends State<SellScreen> {
 
   String _selectedCategory = _categories.first.value;
   String? _selectedCondition;
+  int _quantity = 1;
   bool _isUploading = false;
 
   @override
@@ -93,6 +94,12 @@ class _SellScreenState extends State<SellScreen> {
     }
 
     return null;
+  }
+
+  void _changeQuantity(int delta) {
+    setState(() {
+      _quantity = (_quantity + delta).clamp(1, 999);
+    });
   }
 
   Future<void> _handlePost() async {
@@ -189,16 +196,30 @@ class _SellScreenState extends State<SellScreen> {
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: _SellTextField(
-                              label: 'Giá (đ)',
-                              controller: _priceController,
-                              hintText: '0',
-                              keyboardType: TextInputType.number,
-                              priceStyle: true,
-                              validator: _validatePrice,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const _SectionLabel('Số lượng'),
+                                const SizedBox(height: 8),
+                                _QuantitySelector(
+                                  quantity: _quantity,
+                                  onDecrease: () => _changeQuantity(-1),
+                                  onIncrease: () => _changeQuantity(1),
+                                  compact: true,
+                                ),
+                              ],
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 16),
+                      _SellTextField(
+                        label: 'Giá (đ)',
+                        controller: _priceController,
+                        hintText: '0',
+                        keyboardType: TextInputType.number,
+                        priceStyle: true,
+                        validator: _validatePrice,
                       ),
                       const SizedBox(height: 16),
                       const _SectionLabel('Tình trạng'),
@@ -507,6 +528,90 @@ class _SellDropdownField extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _QuantitySelector extends StatelessWidget {
+  const _QuantitySelector({
+    required this.quantity,
+    required this.onDecrease,
+    required this.onIncrease,
+    this.compact = false,
+  });
+
+  final int quantity;
+  final VoidCallback onDecrease;
+  final VoidCallback onIncrease;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 12,
+        vertical: compact ? 6 : 8,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.gray50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+      ),
+      child: Row(
+        children: [
+          _QuantityButton(
+            icon: Icons.remove,
+            onPressed: quantity > 1 ? onDecrease : null,
+          ),
+          Expanded(
+            child: Text(
+              '$quantity',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.gray900,
+              ),
+            ),
+          ),
+          _QuantityButton(
+            icon: Icons.add,
+            onPressed: quantity < 999 ? onIncrease : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuantityButton extends StatelessWidget {
+  const _QuantityButton({
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 36,
+          height: 36,
+          alignment: Alignment.center,
+          child: Icon(
+            icon,
+            size: 18,
+            color: onPressed == null ? AppColors.gray400 : AppColors.primary,
+          ),
+        ),
+      ),
     );
   }
 }

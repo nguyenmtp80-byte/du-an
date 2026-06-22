@@ -7,12 +7,12 @@ class OrderApiService {
 
   final ApiClient _apiClient;
 
-  Future<Map<String, dynamic>> createOrder({
+  Future<Order> createOrder({
     required String userId,
     required String paymentMethod,
     required Map<String, dynamic> deliveryInfo,
-  }) {
-    return _apiClient.post(
+  }) async {
+    final response = await _apiClient.post(
       ApiConfig.orderCreateEndpoint,
       extraHeaders: {'X-User-Id': userId},
       body: {
@@ -20,6 +20,17 @@ class OrderApiService {
         'deliveryInfo': deliveryInfo,
       },
     );
+
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return Order.fromJson(data);
+    }
+
+    if (response.containsKey('id')) {
+      return Order.fromJson(response);
+    }
+
+    throw ApiException('Không nhận được dữ liệu đơn hàng từ server.');
   }
 
   Future<List<Order>> getUserOrders({required String userId}) async {
@@ -39,6 +50,11 @@ class OrderApiService {
       ApiConfig.orderDetailEndpoint(orderId),
       extraHeaders: {'X-User-Id': userId},
     );
+
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return Order.fromJson(data);
+    }
 
     return Order.fromJson(response);
   }

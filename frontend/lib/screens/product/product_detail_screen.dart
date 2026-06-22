@@ -391,6 +391,14 @@ class _ProductInfoSection extends StatelessWidget {
                     ),
                   ),
                 ),
+                Text(
+                  'Còn ${product.quantity} sp',
+                  style: const TextStyle(
+                    color: AppColors.gray500,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
             if (product.createdAt != null) ...[

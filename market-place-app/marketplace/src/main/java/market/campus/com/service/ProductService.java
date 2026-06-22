@@ -23,10 +23,10 @@ public class ProductService {
     public List<ProductListResponse> getAllProducts(String search, String category,
                                                      String status, BigDecimal minPrice,
                                                      BigDecimal maxPrice) {
-        // Chuẩn hóa status thành uppercase để khớp với ENUM trong DB
+        // Chuẩn hóa status theo enum DB (available, sold)
         String statusParam = null;
         if (status != null && !status.isEmpty()) {
-            statusParam = status.toUpperCase();
+            statusParam = status.toLowerCase();
         }
 
         List<Product> products = productRepository.findFilteredProducts(
@@ -61,7 +61,9 @@ public class ProductService {
                 product.getPrice(),
                 imageUrls,
                 product.getCategory(),
-                product.getStatus() != null ? product.getStatus().toString() : "AVAILABLE",
+                product.getCondition() != null ? product.getCondition().toString() : null,
+                product.getStatus() != null ? product.getStatus().toString() : "available",
+                product.getQuantity() != null ? product.getQuantity() : 0,
                 product.getLocationName(),
                 sellerInfo,
                 product.getCreatedAt()
@@ -97,6 +99,7 @@ public class ProductService {
                 product.getCategory(),
                 conditionStr,
                 product.getStatus().toString(),
+                product.getQuantity() != null ? product.getQuantity() : 0,
                 imageUrls,
                 product.getLocationName(),
                 sellerInfo,

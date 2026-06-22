@@ -135,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisCount: 2,
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
-                    childAspectRatio: 0.72,
+                    childAspectRatio: 0.74,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -347,9 +347,10 @@ class _CategoryChips extends StatelessWidget {
         itemBuilder: (context, index) {
           final category = categories[index];
           final isActive = category == activeCategory;
+          final label = category == 'All' ? 'Tất cả' : category;
 
           return FilterChip(
-            label: Text(category),
+            label: Text(label),
             selected: isActive,
             onSelected: (_) => onCategorySelected(category),
             showCheckmark: false,

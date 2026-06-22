@@ -370,6 +370,8 @@ Chạy BE:
 cd D:\Git_Push\du-an\market-place-app\marketplace
 .\mvnw.cmd spring-boot:run
 
+http://localhost:8080/swagger-ui.html
+
 Chạy FE trên Chrome: 
 cd D:\Git_Push\du-an\frontend
 flutter run -d chrome --web-browser-flag=--disable-web-security --web-browser-flag=--user-data-dir=C:/temp/flutter_chrome_dev
@@ -378,3 +380,38 @@ Chạy FE trên android thật:
 cd D:\Git_Push\du-an\frontend
 flutter run
 
+-----Luồng xử lý bán - đăng bán -----
+
+Account A (Seller)
+↓
+Đăng Macbook Air M2
+
+Account B (Buyer)
+↓
+Tìm Macbook
+↓
+Xem chi tiết
+↓
+Chat hỏi giá ( tuỳ chọn)
+↓
+Add To Cart
+↓
+Checkout
+
+Account A
+↓
+My Orders
+↓
+Accept <xem chi tiết và tình trạng đơn hàng>
+
+Account B
+↓
+Order Status = Confirmed <cập nhật bằng tay thông qua notifications>
+
+Account A
+↓
+Complete Order <tới địa điểm giao dịch nhận hàng và complete bằng tay có thông báo>
+
+Account B
+↓
+Order Status = Completed <cập nhật bằng tay thông qua notifications>

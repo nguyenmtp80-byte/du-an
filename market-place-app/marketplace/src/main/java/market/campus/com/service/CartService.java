@@ -35,22 +35,19 @@ public class CartService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
 
-        // Kiểm tra sản phẩm có sẵn hay không
-        if (product.getStatus() == ProductStatus.sold) {
-            throw new InvalidDataException("Sản phẩm đã hết hàng");
-        }
+        validateProductAvailability(product);
 
         // Kiểm tra sản phẩm đã trong giỏ chưa (flat cart: mỗi user-product là 1 row)
         Cart existingCart = cartRepository.findByUserAndProduct(user, product)
                 .orElse(null);
 
         if (existingCart != null) {
-            // Tăng số lượng nếu sản phẩm đã tồn tại
             int newQuantity = existingCart.getQuantity() + request.getQuantity();
+            validateStockQuantity(product, newQuantity);
             existingCart.setQuantity(newQuantity);
             cartRepository.save(existingCart);
         } else {
-            // Tạo item mới
+            validateStockQuantity(product, request.getQuantity());
             Cart cartItem = new Cart();
             cartItem.setId(UUID.randomUUID().toString());
             cartItem.setUser(user);
@@ -70,10 +67,13 @@ public class CartService {
         Cart cartItem = cartRepository.findById(request.getCartItemId())
                 .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm trong giỏ không tồn tại"));
 
-        // Kiểm tra item này thuộc user hiện tại
         if (!cartItem.getUser().getId().equals(user.getId())) {
             throw new InvalidDataException("Không có quyền cập nhật");
         }
+
+        Product product = cartItem.getProduct();
+        validateProductAvailability(product);
+        validateStockQuantity(product, request.getQuantity());
 
         cartItem.setQuantity(request.getQuantity());
         cartRepository.save(cartItem);
@@ -129,11 +129,33 @@ public class CartService {
         );
     }
 
-    // Validate quantity
     private void validateQuantity(Integer quantity) {
         if (quantity == null || quantity <= 0) {
             throw new InvalidDataException("Số lượng phải lớn hơn 0");
         }
+    }
+
+    private void validateProductAvailability(Product product) {
+        int stock = getStockQuantity(product);
+
+        if (product.getStatus() == ProductStatus.sold || stock <= 0) {
+            throw new InvalidDataException("Sản phẩm " + product.getTitle() + " đã hết hàng");
+        }
+    }
+
+    private void validateStockQuantity(Product product, int requestedQuantity) {
+        int stock = getStockQuantity(product);
+
+        if (requestedQuantity > stock) {
+            throw new InvalidDataException(
+                    "Số lượng trong giỏ vượt quá tồn kho sản phẩm "
+                            + product.getTitle() + " (còn " + stock + ")"
+            );
+        }
+    }
+
+    private int getStockQuantity(Product product) {
+        return product.getQuantity() != null ? product.getQuantity() : 0;
     }
 
     // Xóa toàn bộ giỏ hàng của user (dùng cho checkout)

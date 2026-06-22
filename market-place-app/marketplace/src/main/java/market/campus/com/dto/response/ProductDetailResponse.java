@@ -12,6 +12,7 @@ public class ProductDetailResponse {
     private String category;
     private String condition;
     private String status;
+    private Integer quantity;
     private List<String> imageUrls;
     private String locationName;
     private SellerInfoResponse seller;
@@ -21,7 +22,7 @@ public class ProductDetailResponse {
 
     public ProductDetailResponse(String id, String title, String description, BigDecimal price,
                                  String category, String condition, String status,
-                                 List<String> imageUrls, String locationName,
+                                 Integer quantity, List<String> imageUrls, String locationName,
                                  SellerInfoResponse seller, LocalDateTime createdAt) {
         this.id = id;
         this.title = title;
@@ -30,6 +31,7 @@ public class ProductDetailResponse {
         this.category = category;
         this.condition = condition;
         this.status = status;
+        this.quantity = quantity;
         this.imageUrls = imageUrls;
         this.locationName = locationName;
         this.seller = seller;
@@ -57,6 +59,9 @@ public class ProductDetailResponse {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
     public List<String> getImageUrls() { return imageUrls; }
     public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls; }

@@ -37,6 +37,9 @@ public class Product {
     @Column(nullable = true)
     private ProductCondition condition;
 
+    @Column(nullable = false)
+    private Integer quantity = 1;
+
     @Column(name = "location_name", length = 255)
     private String locationName;
 
@@ -52,7 +55,7 @@ public class Product {
 
     public Product(String id, String title, String description, BigDecimal price,
                    String[] imageUrls, String category, ProductCondition condition,
-                   ProductStatus status, String locationName, User seller) {
+                   ProductStatus status, Integer quantity, String locationName, User seller) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -61,6 +64,7 @@ public class Product {
         this.category = category;
         this.condition = condition;
         this.status = status;
+        this.quantity = quantity != null ? quantity : 1;
         this.locationName = locationName;
         this.seller = seller;
     }
@@ -89,6 +93,9 @@ public class Product {
 
     public ProductStatus getStatus() { return status; }
     public void setStatus(ProductStatus status) { this.status = status; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
     public String getLocationName() { return locationName; }
     public void setLocationName(String locationName) { this.locationName = locationName; }

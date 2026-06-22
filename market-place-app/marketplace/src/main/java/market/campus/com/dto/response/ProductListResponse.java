@@ -11,7 +11,9 @@ public class ProductListResponse {
     private BigDecimal price;
     private List<String> imageUrls;
     private String category;
+    private String condition;
     private String status;
+    private Integer quantity;
     private String locationName;
     private SellerInfoResponse seller;
     private LocalDateTime createdAt;
@@ -19,16 +21,18 @@ public class ProductListResponse {
     public ProductListResponse() {}
 
     public ProductListResponse(String id, String name, String description, BigDecimal price,
-                               List<String> imageUrls, String category, String status,
-                               String locationName, SellerInfoResponse seller,
-                               LocalDateTime createdAt) {
+                               List<String> imageUrls, String category, String condition,
+                               String status, Integer quantity, String locationName,
+                               SellerInfoResponse seller, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.price = price;
         this.imageUrls = imageUrls;
         this.category = category;
+        this.condition = condition;
         this.status = status;
+        this.quantity = quantity;
         this.locationName = locationName;
         this.seller = seller;
         this.createdAt = createdAt;
@@ -53,8 +57,14 @@ public class ProductListResponse {
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
 
+    public String getCondition() { return condition; }
+    public void setCondition(String condition) { this.condition = condition; }
+
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
     public String getLocationName() { return locationName; }
     public void setLocationName(String locationName) { this.locationName = locationName; }

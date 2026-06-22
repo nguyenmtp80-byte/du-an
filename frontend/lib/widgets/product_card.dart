@@ -40,8 +40,7 @@ class ProductCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AspectRatio(
-                aspectRatio: 1,
+              Expanded(
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -84,9 +83,10 @@ class ProductCard extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       product.name,
@@ -96,30 +96,30 @@ class ProductCard extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: AppColors.gray900,
-                        height: 1.2,
+                        height: 1.15,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Expanded(
                           child: Text(
                             formatPrice(product.price),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primary,
                             ),
                           ),
                         ),
                         Text(
-                          sellerFirstName(product),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          'SL: ${product.quantity}',
                           style: const TextStyle(
                             fontSize: 10,
-                            color: AppColors.gray400,
+                            color: AppColors.gray500,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
