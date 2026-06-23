@@ -39,6 +39,9 @@ public class OrderService {
     @Autowired
     private CartService cartService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Transactional
     public OrderResponse createOrder(User buyer, CreateOrderRequest request) {
         // Lấy giỏ hàng của user (flat cart: list Cart rows)
@@ -72,9 +75,9 @@ public class OrderService {
         validateDeliveryInfo(request.getDeliveryInfo());
 
         // Tính tổng tiền
-        BigDecimal totalAmount = cartItems.stream()
-                .map(item -> item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        int totalAmount = cartItems.stream()
+                .mapToInt(item -> item.getProduct().getPrice().intValue() * item.getQuantity())
+                .sum();
 
         // Lấy seller từ sản phẩm đầu tiên (giả định 1 đơn hàng chỉ mua từ 1 seller)
         User seller = cartItems.get(0).getProduct().getSeller();
@@ -87,17 +90,14 @@ public class OrderService {
 
         // Tạo OrderItems từ CartItems
         for (Cart cartItem : cartItems) {
-            BigDecimal unitPrice = cartItem.getProduct().getPrice();
-            BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+            int itemPrice = cartItem.getProduct().getPrice().intValue();
 
             OrderItem orderItem = new OrderItem(
                     UUID.randomUUID().toString(),
                     order,
                     cartItem.getProduct(),
                     cartItem.getQuantity(),
-                    unitPrice,      // price
-                    unitPrice,      // unit_price
-                    subtotal
+                    itemPrice
             );
             orderItemRepository.save(orderItem);
 
@@ -154,6 +154,85 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Seller accepts/approves an order - updates status to APPROVED and sends notification to buyer.
+     * Entire operation is wrapped in @Transactional so if notification creation fails, status update is rolled back.
+     */
+    @Transactional
+    public OrderResponse acceptOrder(String orderId, User seller) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Đơn hàng không tồn tại: " + orderId));
+
+        // Validate that the requester is the seller of this order
+        if (!order.getSeller().getId().equals(seller.getId())) {
+            throw new InvalidDataException("Bạn không phải người bán của đơn hàng này");
+        }
+
+        // Validate current status allows acceptance
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new InvalidDataException(
+                    "Đơn hàng không ở trạng thái chờ xác nhận (trạng thái hiện tại: " + order.getStatus() + ")"
+            );
+        }
+
+        // Update order status
+        order.setStatus(OrderStatus.APPROVED);
+        orderRepository.save(order);
+
+        // Create notification for buyer
+        notificationService.createNotification(
+                order.getBuyer(),
+                "Xác nhận đơn hàng",
+                "Đơn hàng " + orderId + " của bạn đã được người bán xác nhận.",
+                "order_status"
+        );
+
+        return getOrderResponse(order);
+    }
+
+    /**
+     * Seller completes an order - updates status to COMPLETED and sends notification to buyer.
+     * Entire operation is wrapped in @Transactional for rollback safety.
+     */
+    @Transactional
+    public OrderResponse completeOrder(String orderId, User seller) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Đơn hàng không tồn tại: " + orderId));
+
+        // Validate that the requester is the seller of this order
+        if (!order.getSeller().getId().equals(seller.getId())) {
+            throw new InvalidDataException("Bạn không phải người bán của đơn hàng này");
+        }
+
+        // Validate current status allows completion
+        if (order.getStatus() != OrderStatus.APPROVED) {
+            throw new InvalidDataException(
+                    "Đơn hàng phải được xác nhận trước khi hoàn tất (trạng thái hiện tại: " + order.getStatus() + ")"
+            );
+        }
+
+        // Update order status
+        order.setStatus(OrderStatus.COMPLETED);
+        orderRepository.save(order);
+
+        // Create notification for buyer
+        notificationService.createNotification(
+                order.getBuyer(),
+                "Đơn hàng hoàn thành",
+                "Đơn hàng " + orderId + " của bạn đã hoàn tất. Cảm ơn bạn!",
+                "order_status"
+        );
+
+        return getOrderResponse(order);
+    }
+
+    // Lấy danh sách đơn hàng của seller
+    public List<OrderResponse> getSellerOrders(User seller) {
+        return orderRepository.findBySeller(seller).stream()
+                .map(this::getOrderResponse)
+                .collect(Collectors.toList());
+    }
+
     // Convert Order to OrderResponse
     private OrderResponse getOrderResponse(Order order) {
         var items = orderItemRepository.findByOrder(order).stream()
@@ -162,8 +241,8 @@ public class OrderService {
                         item.getProduct().getId(),
                         item.getProduct().getTitle(),
                         item.getQuantity(),
-                        item.getUnitPrice(),
-                        item.getSubtotal()
+                        item.getPrice(),
+                        item.getQuantity() * item.getPrice()
                 ))
                 .collect(Collectors.toList());
 

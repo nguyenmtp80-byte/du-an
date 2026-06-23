@@ -8,7 +8,7 @@ public class OrderResponse {
     private String id;
     private String buyerId;
     private String sellerId;
-    private BigDecimal totalAmount;
+    private Integer totalAmount;
     private String status;
     private String paymentMethod;
     private String shippingNote;
@@ -17,7 +17,7 @@ public class OrderResponse {
 
     public OrderResponse() {}
 
-    public OrderResponse(String id, String buyerId, String sellerId, BigDecimal totalAmount,
+    public OrderResponse(String id, String buyerId, String sellerId, Integer totalAmount,
                         String status, String paymentMethod, String shippingNote,
                         List<OrderItemResponse> items, LocalDateTime createdAt) {
         this.id = id;
@@ -41,8 +41,8 @@ public class OrderResponse {
     public String getSellerId() { return sellerId; }
     public void setSellerId(String sellerId) { this.sellerId = sellerId; }
 
-    public BigDecimal getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public Integer getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(Integer totalAmount) { this.totalAmount = totalAmount; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

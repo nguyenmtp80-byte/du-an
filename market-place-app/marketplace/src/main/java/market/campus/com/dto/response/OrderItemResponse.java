@@ -7,13 +7,13 @@ public class OrderItemResponse {
     private String productId;
     private String productName;
     private Integer quantity;
-    private BigDecimal unitPrice;
-    private BigDecimal subtotal;
+    private Integer unitPrice;
+    private Integer subtotal;
 
     public OrderItemResponse() {}
 
     public OrderItemResponse(String id, String productId, String productName, Integer quantity,
-                            BigDecimal unitPrice, BigDecimal subtotal) {
+                            Integer unitPrice, Integer subtotal) {
         this.id = id;
         this.productId = productId;
         this.productName = productName;
@@ -23,51 +23,21 @@ public class OrderItemResponse {
     }
 
     // Getters and Setters
-    public String getId() {
-        return id;
-    }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public String getProductId() { return productId; }
+    public void setProductId(String productId) { this.productId = productId; }
 
-    public String getProductId() {
-        return productId;
-    }
+    public String getProductName() { return productName; }
+    public void setProductName(String productName) { this.productName = productName; }
 
-    public void setProductId(String productId) {
-        this.productId = productId;
-    }
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
-    public String getProductName() {
-        return productName;
-    }
+    public Integer getUnitPrice() { return unitPrice; }
+    public void setUnitPrice(Integer unitPrice) { this.unitPrice = unitPrice; }
 
-    public void setProductName(String productName) {
-        this.productName = productName;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public BigDecimal getUnitPrice() {
-        return unitPrice;
-    }
-
-    public void setUnitPrice(BigDecimal unitPrice) {
-        this.unitPrice = unitPrice;
-    }
-
-    public BigDecimal getSubtotal() {
-        return subtotal;
-    }
-
-    public void setSubtotal(BigDecimal subtotal) {
-        this.subtotal = subtotal;
-    }
+    public Integer getSubtotal() { return subtotal; }
+    public void setSubtotal(Integer subtotal) { this.subtotal = subtotal; }
 }

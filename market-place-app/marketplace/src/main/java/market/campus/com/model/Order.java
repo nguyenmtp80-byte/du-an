@@ -4,9 +4,7 @@ import jakarta.persistence.*;
 import market.campus.com.model.enums.OrderStatus;
 import market.campus.com.model.enums.PaymentMethod;
 import org.hibernate.annotations.CreationTimestamp;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -23,8 +21,8 @@ public class Order {
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
 
-    @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
-    private BigDecimal totalAmount;
+    @Column(name = "total_amount", nullable = false)
+    private Integer totalAmount;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -43,7 +41,7 @@ public class Order {
 
     public Order() {}
 
-    public Order(String id, User buyer, User seller, BigDecimal totalAmount,
+    public Order(String id, User buyer, User seller, Integer totalAmount,
                  OrderStatus status, PaymentMethod paymentMethod, String shippingNote) {
         this.id = id;
         this.buyer = buyer;
@@ -64,8 +62,8 @@ public class Order {
     public User getSeller() { return seller; }
     public void setSeller(User seller) { this.seller = seller; }
 
-    public BigDecimal getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public Integer getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(Integer totalAmount) { this.totalAmount = totalAmount; }
 
     public OrderStatus getStatus() { return status; }
     public void setStatus(OrderStatus status) { this.status = status; }
