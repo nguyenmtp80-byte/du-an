@@ -94,6 +94,7 @@ CREATE TABLE notifications (
     title VARCHAR(255) NOT NULL,
     body TEXT,
     type VARCHAR(100), -- order_status, new_message, product_approved
+    order_id VARCHAR(255), -- Liên kết tới đơn hàng (tuỳ chọn)
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

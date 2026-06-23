@@ -17,6 +17,7 @@ public class NotificationResponse {
     private String title;
     private String body;
     private String type;
+    private String orderId;
     private Boolean isRead;
     private LocalDateTime createdAt;
 }

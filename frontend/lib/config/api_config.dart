@@ -34,7 +34,16 @@ class ApiConfig {
   static String cartDeleteEndpoint(String cartItemId) => '/cart/$cartItemId';
   static const String orderCreateEndpoint = '/orders/create';
   static const String ordersEndpoint = '/orders';
+  static const String sellerOrdersEndpoint = '/orders/seller/list';
   static String orderDetailEndpoint(String orderId) => '/orders/$orderId';
+  static String orderAcceptEndpoint(String orderId) => '/orders/$orderId/accept';
+  static String orderCompleteEndpoint(String orderId) => '/orders/$orderId/complete';
+
+  static const String notificationsEndpoint = '/notifications';
+  static const String notificationsUnreadCountEndpoint = '/notifications/unread/count';
+  static const String notificationsReadAllEndpoint = '/notifications/read-all';
+  static String notificationReadEndpoint(String notificationId) =>
+      '/notifications/$notificationId/read';
 
   /// ID sản phẩm mẫu trong `TEST_CASES.md` — dùng fallback khi BE chưa có GET /products.
   static const List<String> devProductIds = ['prod-1', 'prod-2', 'prod-3'];

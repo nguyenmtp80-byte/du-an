@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../theme/app_theme.dart';
 import '../cart/cart_screen.dart';
 import '../chat/chat_history_screen.dart';
@@ -19,11 +20,20 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
+  final _profileKey = GlobalKey<ProfileScreenState>();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadCart());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCart();
+      _loadUnreadNotifications();
+    });
+  }
+
+  Future<void> _loadUnreadNotifications() async {
+    final userId = context.read<AuthProvider>().user?.id;
+    await context.read<NotificationProvider>().loadUnreadCount(userId);
   }
 
   Future<void> _loadCart() async {
@@ -40,6 +50,10 @@ class _MainShellState extends State<MainShell> {
 
     if (index == 1) {
       _loadCart();
+    }
+
+    if (index == 3) {
+      _profileKey.currentState?.loadOrderStats();
     }
   }
 
@@ -65,7 +79,7 @@ class _MainShellState extends State<MainShell> {
             onStartShopping: () => _onTabSelected(0),
           ),
           const ChatHistoryScreen(),
-          const ProfileScreen(),
+          ProfileScreen(key: _profileKey),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,

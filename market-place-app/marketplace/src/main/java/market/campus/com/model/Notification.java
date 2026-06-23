@@ -34,6 +34,9 @@ public class Notification {
     @Column(length = 100)
     private String type;
 
+    @Column(name = "order_id", length = 255)
+    private String orderId;
+
     @Column(name = "is_read", nullable = false)
     @Builder.Default
     private Boolean isRead = false;

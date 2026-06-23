@@ -115,6 +115,15 @@ public class OrderService {
         // Xóa giỏ hàng
         cartService.clearCart(buyer);
 
+        // Thông báo cho seller có đơn hàng mới cần xác nhận
+        notificationService.createNotification(
+                seller,
+                "Đơn hàng mới",
+                "Bạn có đơn hàng mới " + orderId + " cần xác nhận.",
+                "order_status",
+                orderId
+        );
+
         return getOrderResponse(order);
     }
 
@@ -139,8 +148,10 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn hàng không tồn tại"));
 
-        // Kiểm tra xem đơn hàng có thuộc user này không
-        if (!order.getBuyer().getId().equals(user.getId())) {
+        boolean isBuyer = order.getBuyer().getId().equals(user.getId());
+        boolean isSeller = order.getSeller().getId().equals(user.getId());
+
+        if (!isBuyer && !isSeller) {
             throw new InvalidDataException("Không có quyền xem đơn hàng này");
         }
 
@@ -184,7 +195,8 @@ public class OrderService {
                 order.getBuyer(),
                 "Xác nhận đơn hàng",
                 "Đơn hàng " + orderId + " của bạn đã được người bán xác nhận.",
-                "order_status"
+                "order_status",
+                orderId
         );
 
         return getOrderResponse(order);
@@ -220,7 +232,8 @@ public class OrderService {
                 order.getBuyer(),
                 "Đơn hàng hoàn thành",
                 "Đơn hàng " + orderId + " của bạn đã hoàn tất. Cảm ơn bạn!",
-                "order_status"
+                "order_status",
+                orderId
         );
 
         return getOrderResponse(order);

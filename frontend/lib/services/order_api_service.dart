@@ -58,4 +58,50 @@ class OrderApiService {
 
     return Order.fromJson(response);
   }
+
+  Future<List<Order>> getSellerOrders({required String userId}) async {
+    final response = await _apiClient.getList(
+      ApiConfig.sellerOrdersEndpoint,
+      extraHeaders: {'X-User-Id': userId},
+    );
+
+    return response.map(Order.fromJson).toList();
+  }
+
+  Future<Order> acceptOrder({
+    required String userId,
+    required String orderId,
+  }) async {
+    final response = await _apiClient.put(
+      ApiConfig.orderAcceptEndpoint(orderId),
+      extraHeaders: {'X-User-Id': userId},
+    );
+
+    return _parseOrderResponse(response);
+  }
+
+  Future<Order> completeOrder({
+    required String userId,
+    required String orderId,
+  }) async {
+    final response = await _apiClient.put(
+      ApiConfig.orderCompleteEndpoint(orderId),
+      extraHeaders: {'X-User-Id': userId},
+    );
+
+    return _parseOrderResponse(response);
+  }
+
+  Order _parseOrderResponse(Map<String, dynamic> response) {
+    final data = response['data'];
+    if (data is Map<String, dynamic>) {
+      return Order.fromJson(data);
+    }
+
+    if (response.containsKey('id')) {
+      return Order.fromJson(response);
+    }
+
+    throw ApiException('Không nhận được dữ liệu đơn hàng từ server.');
+  }
 }

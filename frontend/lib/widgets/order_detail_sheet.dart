@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../models/order.dart';
+import '../services/api_client.dart';
+import '../services/order_api_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 
@@ -20,6 +22,10 @@ String formatOrderStatusLabel(String status) {
   switch (status.toUpperCase()) {
     case 'PENDING':
       return 'Chờ xác nhận';
+    case 'APPROVED':
+      return 'Đã xác nhận';
+    case 'COMPLETED':
+      return 'Hoàn thành';
     case 'CONFIRMED':
       return 'Đã xác nhận';
     case 'SHIPPED':
@@ -47,19 +53,143 @@ String formatPaymentMethodLabel(String method) {
 Future<void> showOrderDetailSheet({
   required BuildContext context,
   required Order order,
+  bool enableSellerActions = false,
+  OrderApiService? orderApiService,
+  String? userId,
+  VoidCallback? onOrderUpdated,
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => _OrderDetailSheet(order: order),
+    builder: (context) => _OrderDetailSheet(
+      order: order,
+      enableSellerActions: enableSellerActions,
+      orderApiService: orderApiService,
+      userId: userId,
+      onOrderUpdated: onOrderUpdated,
+    ),
   );
 }
 
-class _OrderDetailSheet extends StatelessWidget {
-  const _OrderDetailSheet({required this.order});
+class _OrderDetailSheet extends StatefulWidget {
+  const _OrderDetailSheet({
+    required this.order,
+    this.enableSellerActions = false,
+    this.orderApiService,
+    this.userId,
+    this.onOrderUpdated,
+  });
 
   final Order order;
+  final bool enableSellerActions;
+  final OrderApiService? orderApiService;
+  final String? userId;
+  final VoidCallback? onOrderUpdated;
+
+  @override
+  State<_OrderDetailSheet> createState() => _OrderDetailSheetState();
+}
+
+class _OrderDetailSheetState extends State<_OrderDetailSheet> {
+  late Order _order;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _order = widget.order;
+  }
+
+  bool get _canAccept =>
+      widget.enableSellerActions && _order.status.toUpperCase() == 'PENDING';
+
+  bool get _canComplete =>
+      widget.enableSellerActions && _order.status.toUpperCase() == 'APPROVED';
+
+  Future<void> _handleAccept() async {
+    final userId = widget.userId;
+    final api = widget.orderApiService;
+    if (userId == null || api == null) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final updated = await api.acceptOrder(userId: userId, orderId: _order.id);
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _order = updated;
+        _isSubmitting = false;
+      });
+      widget.onOrderUpdated?.call();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã xác nhận đơn hàng.')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể xác nhận đơn hàng.')),
+      );
+    }
+  }
+
+  Future<void> _handleComplete() async {
+    final userId = widget.userId;
+    final api = widget.orderApiService;
+    if (userId == null || api == null) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final updated = await api.completeOrder(userId: userId, orderId: _order.id);
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _order = updated;
+        _isSubmitting = false;
+      });
+      widget.onOrderUpdated?.call();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã hoàn tất đơn hàng.')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể hoàn tất đơn hàng.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +232,7 @@ class _OrderDetailSheet extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Mã đơn: ${order.id}',
+            'Mã đơn: ${_order.id}',
             style: const TextStyle(fontSize: 12, color: AppColors.gray500),
           ),
           const SizedBox(height: 16),
@@ -113,19 +243,19 @@ class _OrderDetailSheet extends StatelessWidget {
                 children: [
                   _DetailRow(
                     label: 'Trạng thái',
-                    value: formatOrderStatusLabel(order.status),
+                    value: formatOrderStatusLabel(_order.status),
                   ),
                   _DetailRow(
                     label: 'Thanh toán',
-                    value: formatPaymentMethodLabel(order.paymentMethod),
+                    value: formatPaymentMethodLabel(_order.paymentMethod),
                   ),
-                  if (order.shippingNote != null &&
-                      order.shippingNote!.trim().isNotEmpty)
-                    _DetailRow(label: 'Ghi chú', value: order.shippingNote!),
-                  if (order.createdAt != null)
+                  if (_order.shippingNote != null &&
+                      _order.shippingNote!.trim().isNotEmpty)
+                    _DetailRow(label: 'Ghi chú', value: _order.shippingNote!),
+                  if (_order.createdAt != null)
                     _DetailRow(
                       label: 'Ngày đặt',
-                      value: formatRelativeDate(order.createdAt),
+                      value: formatRelativeDate(_order.createdAt),
                     ),
                   const SizedBox(height: 12),
                   const Text(
@@ -136,13 +266,13 @@ class _OrderDetailSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  if (order.items.isEmpty)
+                  if (_order.items.isEmpty)
                     const Text(
                       'Không có sản phẩm trong đơn.',
                       style: TextStyle(color: AppColors.gray500, fontSize: 13),
                     )
                   else
-                    ...order.items.map(
+                    ..._order.items.map(
                       (item) => Container(
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.all(12),
@@ -197,7 +327,7 @@ class _OrderDetailSheet extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        formatPrice(order.totalAmount),
+                        formatPrice(_order.totalAmount),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -211,6 +341,54 @@ class _OrderDetailSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          if (_canAccept)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: FilledButton(
+                onPressed: _isSubmitting ? null : _handleAccept,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Xác nhận đơn'),
+              ),
+            ),
+          if (_canComplete)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: FilledButton(
+                onPressed: _isSubmitting ? null : _handleComplete,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF059669),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Hoàn tất đơn'),
+              ),
+            ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
             style: FilledButton.styleFrom(

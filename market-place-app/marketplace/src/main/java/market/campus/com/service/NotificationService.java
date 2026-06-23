@@ -6,7 +6,7 @@ import market.campus.com.model.User;
 import java.util.List;
 
 public interface NotificationService {
-    NotificationResponse createNotification(User receiver, String title, String body, String type);
+    NotificationResponse createNotification(User receiver, String title, String body, String type, String orderId);
     List<NotificationResponse> getUserNotifications(User user);
     List<NotificationResponse> getUnreadNotifications(User user);
     long countUnreadNotifications(User user);

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/product_card.dart';
@@ -26,7 +27,13 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductProvider>().initialize();
       _loadCart();
+      _loadUnreadNotifications();
     });
+  }
+
+  Future<void> _loadUnreadNotifications() async {
+    final userId = context.read<AuthProvider>().user?.id;
+    await context.read<NotificationProvider>().loadUnreadCount(userId);
   }
 
   Future<void> _loadCart() async {
@@ -53,12 +60,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openNotifications() {
-    Navigator.of(context).push(
+  Future<void> _openNotifications() async {
+    await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => const NotificationsScreen(showBackButton: true),
       ),
     );
+
+    if (!mounted) {
+      return;
+    }
+
+    await _loadUnreadNotifications();
   }
 
   void _openProductDetail(String productId) {
@@ -72,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final productProvider = context.watch<ProductProvider>();
+    final hasUnread = context.watch<NotificationProvider>().hasUnread;
 
     return Scaffold(
       backgroundColor: AppColors.gray50,
@@ -88,6 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onFilterTap: _openFilterSheet,
               onNotificationTap: _openNotifications,
               onSearchChanged: productProvider.setSearchQuery,
+              showNotificationBadge: hasUnread,
             )),
             if (productProvider.isUsingDetailFallback)
               const SliverToBoxAdapter(child: _FallbackBanner()),
@@ -166,12 +181,14 @@ class _HomeHeader extends StatelessWidget {
     required this.onFilterTap,
     required this.onNotificationTap,
     required this.onSearchChanged,
+    this.showNotificationBadge = false,
   });
 
   final TextEditingController searchController;
   final VoidCallback onFilterTap;
   final VoidCallback onNotificationTap;
   final ValueChanged<String> onSearchChanged;
+  final bool showNotificationBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -238,6 +255,7 @@ class _HomeHeader extends StatelessWidget {
                   _HeaderIconButton(
                     icon: Icons.notifications_outlined,
                     onTap: onNotificationTap,
+                    showBadge: showNotificationBadge,
                   ),
                   const SizedBox(width: 8),
                   _HeaderIconButton(
@@ -278,10 +296,12 @@ class _HeaderIconButton extends StatelessWidget {
   const _HeaderIconButton({
     required this.icon,
     required this.onTap,
+    this.showBadge = false,
   });
 
   final IconData icon;
   final VoidCallback onTap;
+  final bool showBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -295,7 +315,26 @@ class _HeaderIconButton extends StatelessWidget {
         child: SizedBox(
           width: 40,
           height: 40,
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 20),
+              if (showBadge)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFEF4444),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

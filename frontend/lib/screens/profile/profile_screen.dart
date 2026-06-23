@@ -1,24 +1,123 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/order.dart';
+import '../../models/product.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/api_client.dart';
+import '../../services/order_api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../repositories/product_repository.dart';
 import 'my_listings_screen.dart';
 import 'my_orders_screen.dart';
+import 'sold_orders_screen.dart';
+import '../../utils/order_stats.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => ProfileScreenState();
+}
+
+class ProfileScreenState extends State<ProfileScreen> {
+  final _orderApiService = OrderApiService();
+  final _productRepository = ProductRepository();
+
+  int _soldItemCount = 0;
+  int _boughtItemCount = 0;
+  int _pendingSellerCount = 0;
+  int _buyerItemCount = 0;
+  int _soldOrderItemCount = 0;
+  int _listingProductCount = 0;
+  bool _isLoadingStats = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => loadOrderStats());
+  }
+
+  Future<void> loadOrderStats() async {
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null || userId.isEmpty) {
+      return;
+    }
+
+    setState(() => _isLoadingStats = true);
+
+    try {
+      final results = await Future.wait([
+        _orderApiService.getUserOrders(userId: userId),
+        _orderApiService.getSellerOrders(userId: userId),
+        _productRepository.fetchMyListings(userId),
+      ]);
+
+      if (!mounted) {
+        return;
+      }
+
+      final buyerOrders = results[0] as List<Order>;
+      final sellerOrders = results[1] as List<Order>;
+      final listings = results[2] as List<Product>;
+
+      setState(() {
+        _soldItemCount = countSoldItemQuantity(sellerOrders);
+        _boughtItemCount = countBoughtItemQuantity(buyerOrders);
+        _pendingSellerCount = countPendingSellerOrders(sellerOrders);
+        _buyerItemCount = _boughtItemCount;
+        _soldOrderItemCount = countSoldOrderItemQuantity(sellerOrders);
+        _listingProductCount = listings.length;
+        _isLoadingStats = false;
+      });
+    } on ApiException {
+      if (mounted) {
+        setState(() => _isLoadingStats = false);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingStats = false);
+      }
+    }
+  }
+
+  String _statValue(int value) {
+    if (_isLoadingStats) {
+      return '…';
+    }
+    return '$value';
+  }
+
+  String _menuCount(int value) {
+    if (_isLoadingStats) {
+      return '…';
+    }
+    return '$value SP';
+  }
+
+  String _productCount(int value) {
+    if (_isLoadingStats) {
+      return '…';
+    }
+    return '$value SP';
+  }
 
   void _openOrders(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const MyOrdersScreen()),
-    );
+    ).then((_) => loadOrderStats());
+  }
+
+  void _openSoldOrders(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const SoldOrdersScreen()),
+    ).then((_) => loadOrderStats());
   }
 
   void _openListings(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const MyListingsScreen()),
-    );
+    ).then((_) => loadOrderStats());
   }
 
   Future<void> _confirmLogout(BuildContext context) async {
@@ -69,57 +168,74 @@ class ProfileScreen extends StatelessWidget {
             initial: initial,
             onLogout: () => _confirmLogout(context),
             isLoggingOut: auth.isLoading,
+            soldCount: _statValue(_soldItemCount),
+            boughtCount: _statValue(_boughtItemCount),
+            pendingCount: _statValue(_pendingSellerCount),
           ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
-              children: [
+            child: RefreshIndicator(
+              onRefresh: loadOrderStats,
+              color: AppColors.primary,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
+                children: [
+                  _ProfileMenuItem(
+                    icon: Icons.inventory_2_outlined,
+                    label: 'Đơn hàng mua',
+                    trailing: _menuCount(_buyerItemCount),
+                    onTap: () => _openOrders(context),
+                  ),
+                  const SizedBox(height: 12),
                 _ProfileMenuItem(
-                  icon: Icons.inventory_2_outlined,
-                  label: 'Đơn hàng của tôi',
-                  onTap: () => _openOrders(context),
+                  icon: Icons.receipt_long_outlined,
+                  label: 'Đơn hàng đã bán',
+                  trailing: _menuCount(_soldOrderItemCount),
+                  onTap: () => _openSoldOrders(context),
                 ),
                 const SizedBox(height: 12),
                 _ProfileMenuItem(
                   icon: Icons.storefront_outlined,
                   label: 'Sản phẩm đăng bán',
+                  trailing: _productCount(_listingProductCount),
                   onTap: () => _openListings(context),
                 ),
-                const SizedBox(height: 12),
-                _ProfileMenuItem(
-                  icon: Icons.favorite_border,
-                  label: 'Yêu thích',
-                  trailing: '—',
-                  onTap: () {},
-                ),
-                const SizedBox(height: 12),
-                _ProfileMenuItem(
-                  icon: Icons.credit_card_outlined,
-                  label: 'Phương thức thanh toán',
-                  onTap: () {},
-                ),
-                const SizedBox(height: 12),
-                _ProfileMenuItem(
-                  icon: Icons.help_outline,
-                  label: 'Trung tâm trợ giúp',
-                  onTap: () {},
-                ),
-                const SizedBox(height: 12),
-                _ProfileMenuItem(
-                  icon: Icons.settings_outlined,
-                  label: 'Cài đặt',
-                  onTap: () {},
-                ),
-                const SizedBox(height: 12),
-                _ProfileMenuItem(
-                  icon: Icons.logout,
-                  label: 'Đăng xuất',
-                  labelColor: const Color(0xFFDC2626),
-                  iconBackgroundColor: const Color(0xFFFEF2F2),
-                  iconColor: const Color(0xFFDC2626),
-                  onTap: () => _confirmLogout(context),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  _ProfileMenuItem(
+                    icon: Icons.favorite_border,
+                    label: 'Yêu thích',
+                    trailing: '—',
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 12),
+                  _ProfileMenuItem(
+                    icon: Icons.credit_card_outlined,
+                    label: 'Phương thức thanh toán',
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 12),
+                  _ProfileMenuItem(
+                    icon: Icons.help_outline,
+                    label: 'Trung tâm trợ giúp',
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 12),
+                  _ProfileMenuItem(
+                    icon: Icons.settings_outlined,
+                    label: 'Cài đặt',
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 12),
+                  _ProfileMenuItem(
+                    icon: Icons.logout,
+                    label: 'Đăng xuất',
+                    labelColor: const Color(0xFFDC2626),
+                    iconBackgroundColor: const Color(0xFFFEF2F2),
+                    iconColor: const Color(0xFFDC2626),
+                    onTap: () => _confirmLogout(context),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -135,6 +251,9 @@ class _ProfileHeader extends StatelessWidget {
     required this.initial,
     required this.onLogout,
     required this.isLoggingOut,
+    required this.soldCount,
+    required this.boughtCount,
+    required this.pendingCount,
   });
 
   final String displayName;
@@ -142,6 +261,9 @@ class _ProfileHeader extends StatelessWidget {
   final String initial;
   final VoidCallback onLogout;
   final bool isLoggingOut;
+  final String soldCount;
+  final String boughtCount;
+  final String pendingCount;
 
   @override
   Widget build(BuildContext context) {
@@ -269,16 +391,16 @@ class _ProfileHeader extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Expanded(
-                  child: _StatItem(value: '—', label: 'Đã bán'),
+                  child: _StatItem(value: soldCount, label: 'Đã bán'),
                 ),
                 Expanded(
-                  child: _StatItem(value: '—', label: 'Đánh giá'),
+                  child: _StatItem(value: boughtCount, label: 'Đã mua'),
                 ),
                 Expanded(
-                  child: _StatItem(value: '—', label: 'Thu nhập'),
+                  child: _StatItem(value: pendingCount, label: 'Chờ xác nhận'),
                 ),
               ],
             ),
@@ -310,6 +432,7 @@ class _StatItem extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 11,
             color: Colors.white.withValues(alpha: 0.8),

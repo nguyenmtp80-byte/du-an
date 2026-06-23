@@ -1,36 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/product.dart';
+import '../../models/order.dart';
 import '../../providers/auth_provider.dart';
-import '../../repositories/product_repository.dart';
 import '../../services/api_client.dart';
+import '../../services/order_api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
-import '../product/product_detail_screen.dart';
+import '../../widgets/order_detail_sheet.dart';
 import '../../widgets/screen_header.dart';
 
-class MyListingsScreen extends StatefulWidget {
-  const MyListingsScreen({super.key});
+/// Danh sách đơn đã xác nhận / hoàn tất mà user đã bán.
+class SoldOrdersScreen extends StatefulWidget {
+  const SoldOrdersScreen({super.key});
 
   @override
-  State<MyListingsScreen> createState() => _MyListingsScreenState();
+  State<SoldOrdersScreen> createState() => _SoldOrdersScreenState();
 }
 
-class _MyListingsScreenState extends State<MyListingsScreen> {
-  final _productRepository = ProductRepository();
+class _SoldOrdersScreenState extends State<SoldOrdersScreen> {
+  final _orderApiService = OrderApiService();
 
-  List<Product> _products = [];
+  List<Order> _orders = [];
   bool _isLoading = false;
   String? _error;
+
+  bool _isSoldOrder(Order order) {
+    final status = order.status.toUpperCase();
+    return status == 'APPROVED' || status == 'COMPLETED';
+  }
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadListings());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadOrders());
   }
 
-  Future<void> _loadListings() async {
+  Future<void> _loadOrders() async {
     final userId = context.read<AuthProvider>().user?.id;
     if (userId == null || userId.isEmpty) {
       return;
@@ -42,13 +48,13 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     });
 
     try {
-      final products = await _productRepository.fetchMyListings(userId);
+      final orders = await _orderApiService.getSellerOrders(userId: userId);
       if (!mounted) {
         return;
       }
 
       setState(() {
-        _products = products;
+        _orders = orders.where(_isSoldOrder).toList();
         _isLoading = false;
       });
     } on ApiException catch (error) {
@@ -66,17 +72,64 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       }
 
       setState(() {
-        _error = 'Không thể tải sản phẩm đăng bán.';
+        _error = 'Không thể tải đơn hàng đã bán.';
         _isLoading = false;
       });
     }
   }
 
-  void _openProductDetail(String productId) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ProductDetailScreen(productId: productId),
-      ),
+  Future<void> _openOrderDetail(Order order) async {
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null || userId.isEmpty) {
+      return;
+    }
+
+    Order detail = order;
+
+    if (order.items.isEmpty) {
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+
+      try {
+        detail = await _orderApiService.getOrderDetail(
+          userId: userId,
+          orderId: order.id,
+        );
+      } on ApiException catch (error) {
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error.message)),
+          );
+        }
+        return;
+      } catch (_) {
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Không thể tải chi tiết đơn hàng.')),
+          );
+        }
+        return;
+      }
+
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    await showOrderDetailSheet(
+      context: context,
+      order: detail,
     );
   }
 
@@ -86,10 +139,10 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       backgroundColor: AppColors.gray50,
       body: Column(
         children: [
-          const ScreenHeader(title: 'Sản phẩm đăng bán'),
+          const ScreenHeader(title: 'Đơn hàng đã bán'),
           Expanded(
             child: RefreshIndicator(
-              onRefresh: _loadListings,
+              onRefresh: _loadOrders,
               color: AppColors.primary,
               child: _buildBody(),
             ),
@@ -100,7 +153,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading && _products.isEmpty) {
+    if (_isLoading && _orders.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -120,15 +173,15 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       );
     }
 
-    if (_products.isEmpty) {
+    if (_orders.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: const [
           SizedBox(height: 80),
-          Icon(Icons.storefront_outlined, size: 56, color: AppColors.gray400),
+          Icon(Icons.check_circle_outline, size: 56, color: AppColors.gray400),
           SizedBox(height: 16),
           Text(
-            'Chưa có sản phẩm đăng bán',
+            'Chưa có đơn đã bán',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -138,7 +191,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           ),
           SizedBox(height: 8),
           Text(
-            'Sản phẩm bạn đăng sẽ hiển thị tại đây.',
+            'Các đơn đã xác nhận hoặc hoàn tất sẽ hiển thị tại đây.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.gray500, height: 1.5),
           ),
@@ -149,54 +202,27 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-      itemCount: _products.length,
+      itemCount: _orders.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        final product = _products[index];
+        final order = _orders[index];
 
         return Material(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
-            onTap: () => _openProductDetail(product.id),
+            onTap: () => _openOrderDetail(order),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(
-                      width: 64,
-                      height: 64,
-                      child: product.thumbnailUrl.isEmpty
-                          ? Container(
-                              color: AppColors.gray50,
-                              child: const Icon(
-                                Icons.image_outlined,
-                                color: AppColors.gray400,
-                              ),
-                            )
-                          : Image.network(
-                              product.thumbnailUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Container(
-                                color: AppColors.gray50,
-                                child: const Icon(
-                                  Icons.broken_image_outlined,
-                                  color: AppColors.gray400,
-                                ),
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          product.name,
+                          orderDisplayTitle(order),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -204,9 +230,9 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                             color: AppColors.gray900,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Text(
-                          formatPrice(product.price),
+                          formatPrice(order.totalAmount),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppColors.primary,
@@ -214,7 +240,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'SL: ${product.quantity} · ${formatProductStatus(product.status)}',
+                          formatOrderStatusLabel(order.status),
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.gray500,

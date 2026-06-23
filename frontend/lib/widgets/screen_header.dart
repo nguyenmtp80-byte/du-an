@@ -8,11 +8,13 @@ class ScreenHeader extends StatelessWidget {
     required this.title,
     this.onBack,
     this.showBackButton = true,
+    this.trailing,
   });
 
   final String title;
   final VoidCallback? onBack;
   final bool showBackButton;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -53,14 +55,17 @@ class ScreenHeader extends StatelessWidget {
           else
             const SizedBox(width: 4),
           if (showBackButton) const SizedBox(width: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.gray900,
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.gray900,
+              ),
             ),
           ),
+          if (trailing != null) trailing!,
         ],
       ),
     );

@@ -49,6 +49,11 @@ class ProductRepository {
     return products;
   }
 
+  Future<List<Product>> fetchMyListings(String sellerId) async {
+    final products = await fetchProducts();
+    return products.where((product) => product.seller?.id == sellerId).toList();
+  }
+
   Future<Product> fetchProductDetail(String productId) async {
     final response = await _productApiService.fetchProductDetail(productId);
     return Product.fromJson(response);

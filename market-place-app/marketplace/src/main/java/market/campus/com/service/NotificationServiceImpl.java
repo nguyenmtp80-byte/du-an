@@ -21,13 +21,14 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional
-    public NotificationResponse createNotification(User receiver, String title, String body, String type) {
+    public NotificationResponse createNotification(User receiver, String title, String body, String type, String orderId) {
         Notification notification = Notification.builder()
                 .id(UUID.randomUUID().toString())
                 .receiver(receiver)
                 .title(title)
                 .body(body)
                 .type(type)
+                .orderId(orderId)
                 .isRead(false)
                 .build();
         notification = notificationRepository.save(notification);
@@ -89,6 +90,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .title(notification.getTitle())
                 .body(notification.getBody())
                 .type(notification.getType())
+                .orderId(notification.getOrderId())
                 .isRead(notification.getIsRead())
                 .createdAt(notification.getCreatedAt())
                 .build();

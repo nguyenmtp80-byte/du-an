@@ -125,7 +125,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
       backgroundColor: AppColors.gray50,
       body: Column(
         children: [
-          const ScreenHeader(title: 'Đơn hàng của tôi'),
+          const ScreenHeader(title: 'Đơn hàng mua'),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadOrders,

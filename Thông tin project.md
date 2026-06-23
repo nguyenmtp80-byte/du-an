@@ -392,7 +392,7 @@ Tìm Macbook
 ↓
 Xem chi tiết
 ↓
-Chat hỏi giá ( tuỳ chọn)
+Chat (tuỳ chọn)
 ↓
 Add To Cart
 ↓
@@ -406,12 +406,14 @@ Accept <xem chi tiết và tình trạng đơn hàng>
 
 Account B
 ↓
-Order Status = Confirmed <cập nhật bằng tay thông qua notifications>
+Order Status = Approved <xác nhận đơn cho khách,cập nhật bằng tay thông qua notifications>
 
 Account A
 ↓
-Complete Order <tới địa điểm giao dịch nhận hàng và complete bằng tay có thông báo>
+Complete Order <tới địa điểm giao dịch nhận hàng>
 
 Account B
 ↓
-Order Status = Completed <cập nhật bằng tay thông qua notifications>
+Order Status = Completed <cập nhật bằng tay cho từng đơn>
+
+Sau đó account A có thể nhận được thông báo rằng đơn hàng của bạn đã được hoàn thành.
