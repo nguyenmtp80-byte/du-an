@@ -33,6 +33,31 @@ public class OrderController {
         }
     }
 
+    @GetMapping
+    public ResponseEntity<?> getUserOrders(@RequestHeader("X-User-Id") String userId) {
+        try {
+            User user = new User();
+            user.setId(userId);
+            List<OrderResponse> response = orderService.getUserOrders(user);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    // API: Seller lấy danh sách đơn hàng của mình
+    @GetMapping("/seller/list")
+    public ResponseEntity<?> getSellerOrders(@RequestHeader("X-User-Id") String userId) {
+        try {
+            User seller = new User();
+            seller.setId(userId);
+            List<OrderResponse> response = orderService.getSellerOrders(seller);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     @GetMapping("/{orderId}")
     public ResponseEntity<?> getOrderDetail(@RequestHeader("X-User-Id") String userId,
                                            @PathVariable String orderId) {
@@ -46,13 +71,29 @@ public class OrderController {
         }
     }
 
-    @GetMapping
-    public ResponseEntity<?> getUserOrders(@RequestHeader("X-User-Id") String userId) {
+    // API 1: Seller accepts/approves an order
+    @PutMapping("/{orderId}/accept")
+    public ResponseEntity<?> acceptOrder(@RequestHeader("X-User-Id") String userId,
+                                         @PathVariable String orderId) {
         try {
-            User user = new User();
-            user.setId(userId);
-            List<OrderResponse> response = orderService.getUserOrders(user);
-            return ResponseEntity.ok(response);
+            User seller = new User();
+            seller.setId(userId);
+            OrderResponse response = orderService.acceptOrder(orderId, seller);
+            return ResponseEntity.ok(new SuccessResponse("Xác nhận đơn hàng thành công", response));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    // API 2: Seller completes an order
+    @PutMapping("/{orderId}/complete")
+    public ResponseEntity<?> completeOrder(@RequestHeader("X-User-Id") String userId,
+                                           @PathVariable String orderId) {
+        try {
+            User seller = new User();
+            seller.setId(userId);
+            OrderResponse response = orderService.completeOrder(orderId, seller);
+            return ResponseEntity.ok(new SuccessResponse("Hoàn tất đơn hàng thành công", response));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
