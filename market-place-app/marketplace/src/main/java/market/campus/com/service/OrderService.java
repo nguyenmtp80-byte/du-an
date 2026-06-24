@@ -203,6 +203,55 @@ public class OrderService {
     }
 
     /**
+     * Buyer cancels an order - updates status to CANCELLED, restores product stock, and notifies seller.
+     * Only allowed when order is in PENDING status.
+     */
+    @Transactional
+    public OrderResponse cancelOrder(String orderId, User buyer) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Đơn hàng không tồn tại: " + orderId));
+
+        // Validate that the requester is the buyer of this order
+        if (!order.getBuyer().getId().equals(buyer.getId())) {
+            throw new InvalidDataException("Chỉ người mua mới có thể hủy đơn hàng này");
+        }
+
+        // Validate current status allows cancellation
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new InvalidDataException(
+                    "Đơn hàng không thể hủy (trạng thái hiện tại: " + order.getStatus() + ")"
+            );
+        }
+
+        // Restore product stock from order items
+        List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
+        for (OrderItem item : orderItems) {
+            Product product = item.getProduct();
+            int restoredQuantity = (product.getQuantity() != null ? product.getQuantity() : 0) + item.getQuantity();
+            product.setQuantity(restoredQuantity);
+            if (product.getStatus() == ProductStatus.sold && restoredQuantity > 0) {
+                product.setStatus(ProductStatus.available);
+            }
+            productRepository.save(product);
+        }
+
+        // Update order status
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+
+        // Create notification for seller
+        notificationService.createNotification(
+                order.getSeller(),
+                "Đơn hàng đã bị hủy",
+                "Đơn hàng " + orderId + " đã bị người mua hủy.",
+                "order_status",
+                orderId
+        );
+
+        return getOrderResponse(order);
+    }
+
+    /**
      * Seller completes an order - updates status to COMPLETED and sends notification to buyer.
      * Entire operation is wrapped in @Transactional for rollback safety.
      */

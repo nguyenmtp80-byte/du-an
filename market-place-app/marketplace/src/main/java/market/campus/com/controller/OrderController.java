@@ -85,6 +85,20 @@ public class OrderController {
         }
     }
 
+    // API: Buyer cancels an order
+    @PutMapping("/{orderId}/cancel")
+    public ResponseEntity<?> cancelOrder(@RequestHeader("X-User-Id") String userId,
+                                          @PathVariable String orderId) {
+        try {
+            User buyer = new User();
+            buyer.setId(userId);
+            OrderResponse response = orderService.cancelOrder(orderId, buyer);
+            return ResponseEntity.ok(new SuccessResponse("Hủy đơn hàng thành công", response));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     // API 2: Seller completes an order
     @PutMapping("/{orderId}/complete")
     public ResponseEntity<?> completeOrder(@RequestHeader("X-User-Id") String userId,

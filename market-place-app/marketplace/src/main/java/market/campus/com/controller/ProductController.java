@@ -1,5 +1,6 @@
 package market.campus.com.controller;
 
+import market.campus.com.dto.request.CreateProductRequest;
 import market.campus.com.dto.response.ProductDetailResponse;
 import market.campus.com.dto.response.ProductListResponse;
 import market.campus.com.service.ProductService;
@@ -38,6 +39,20 @@ public class ProductController {
             return ResponseEntity.internalServerError().body(
                     new ErrorResponse("Lỗi khi lấy danh sách sản phẩm: " + e.getMessage())
             );
+        }
+    }
+
+    /**
+     * POST /api/products - Tạo sản phẩm mới (đăng bán)
+     */
+    @PostMapping
+    public ResponseEntity<?> createProduct(@RequestHeader("X-User-Id") String userId,
+                                           @RequestBody CreateProductRequest request) {
+        try {
+            ProductDetailResponse product = productService.createProduct(userId, request);
+            return ResponseEntity.ok(product);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
     }
 
