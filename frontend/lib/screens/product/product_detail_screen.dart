@@ -8,6 +8,9 @@ import '../../providers/product_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
 import '../cart/cart_screen.dart';
+import '../chat/chat_screen.dart';
+import '../../services/api_client.dart';
+import '../../services/chat_api_service.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({
@@ -23,7 +26,9 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final _pageController = PageController();
+  final _chatApiService = ChatApiService();
   int _currentImageIndex = 0;
+  bool _isOpeningChat = false;
 
   @override
   void initState() {
@@ -73,6 +78,72 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  Future<void> _handleChat(Product product) async {
+    if (_isOpeningChat) {
+      return;
+    }
+
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null || userId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng đăng nhập để chat.')),
+      );
+      return;
+    }
+
+    if (product.seller?.id == userId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bạn không thể chat với sản phẩm của mình.')),
+      );
+      return;
+    }
+
+    setState(() => _isOpeningChat = true);
+
+    try {
+      final room = await _chatApiService.createOrGetRoom(
+        userId: userId,
+        productId: product.id,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _isOpeningChat = false);
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ChatScreen(
+            roomId: room.id,
+            currentUserId: userId,
+            partnerName: room.partnerNameFor(userId),
+            productName: product.name,
+            productImageUrl: product.thumbnailUrl,
+            productPrice: product.price,
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _isOpeningChat = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _isOpeningChat = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể mở chat.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final productProvider = context.watch<ProductProvider>();
@@ -98,6 +169,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       setState(() => _currentImageIndex = index),
                   onAddToCart: () => _handleAddToCart(product),
                   isAddingToCart: context.watch<CartProvider>().isAdding,
+                  onChat: () => _handleChat(product),
+                  isOpeningChat: _isOpeningChat,
                 ),
     );
   }
@@ -113,6 +186,8 @@ class _ProductDetailBody extends StatelessWidget {
     required this.onPageChanged,
     required this.onAddToCart,
     required this.isAddingToCart,
+    required this.onChat,
+    required this.isOpeningChat,
   });
 
   final Product product;
@@ -123,6 +198,8 @@ class _ProductDetailBody extends StatelessWidget {
   final ValueChanged<int> onPageChanged;
   final VoidCallback onAddToCart;
   final bool isAddingToCart;
+  final VoidCallback onChat;
+  final bool isOpeningChat;
 
   @override
   Widget build(BuildContext context) {
@@ -160,6 +237,8 @@ class _ProductDetailBody extends StatelessWidget {
             product: product,
             onAddToCart: onAddToCart,
             isAddingToCart: isAddingToCart,
+            onChat: onChat,
+            isOpeningChat: isOpeningChat,
           ),
         ),
       ],
@@ -580,11 +659,15 @@ class _BottomActionBar extends StatelessWidget {
     required this.product,
     required this.onAddToCart,
     required this.isAddingToCart,
+    required this.onChat,
+    required this.isOpeningChat,
   });
 
   final Product product;
   final VoidCallback onAddToCart;
   final bool isAddingToCart;
+  final VoidCallback onChat;
+  final bool isOpeningChat;
 
   @override
   Widget build(BuildContext context) {
@@ -612,14 +695,14 @@ class _BottomActionBar extends StatelessWidget {
         children: [
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Tính năng chat sẽ được thêm sau.'),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.chat_bubble_outline),
+              onPressed: isOpeningChat ? null : onChat,
+              icon: isOpeningChat
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.chat_bubble_outline),
               label: const Text('Chat'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,

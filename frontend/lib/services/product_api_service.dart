@@ -40,4 +40,15 @@ class ProductApiService {
   Future<Map<String, dynamic>> fetchProductDetail(String productId) {
     return _apiClient.get(ApiConfig.productDetailEndpoint(productId));
   }
+
+  Future<Map<String, dynamic>> createProduct({
+    required String userId,
+    required Map<String, dynamic> body,
+  }) {
+    return _apiClient.post(
+      ApiConfig.productsEndpoint,
+      extraHeaders: {'X-User-Id': userId},
+      body: body,
+    );
+  }
 }

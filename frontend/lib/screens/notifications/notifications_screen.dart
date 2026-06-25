@@ -130,11 +130,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       Navigator.of(context).pop();
 
       final isSeller = order.sellerId == userId;
+      final isBuyer = order.buyerId == userId;
 
       await showOrderDetailSheet(
         context: context,
         order: order,
         enableSellerActions: isSeller,
+        enableBuyerActions: isBuyer,
         orderApiService: _orderApiService,
         userId: userId,
         onOrderUpdated: () async {

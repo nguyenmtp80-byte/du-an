@@ -1,7 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
+import '../../providers/product_provider.dart';
+import '../../repositories/product_repository.dart';
+import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/validators.dart';
 import '../../widgets/primary_button.dart';
@@ -34,6 +40,8 @@ const _conditions = [
   _SellCondition(label: 'Đã dùng', value: 'USED'),
 ];
 
+const _maxProductImages = 4;
+
 class SellScreen extends StatefulWidget {
   const SellScreen({super.key});
 
@@ -43,6 +51,8 @@ class SellScreen extends StatefulWidget {
 
 class _SellScreenState extends State<SellScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _productRepository = ProductRepository();
+  final _imagePicker = ImagePicker();
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -53,6 +63,8 @@ class _SellScreenState extends State<SellScreen> {
   String? _selectedCondition;
   int _quantity = 1;
   bool _isUploading = false;
+  final List<XFile> _pickedImages = [];
+  final Map<String, Uint8List> _imageBytes = {};
 
   @override
   void initState() {
@@ -102,6 +114,46 @@ class _SellScreenState extends State<SellScreen> {
     });
   }
 
+  Future<void> _pickImages() async {
+    if (_pickedImages.length >= _maxProductImages) {
+      _showMessage('Chỉ được thêm tối đa $_maxProductImages ảnh.');
+      return;
+    }
+
+    try {
+      final picked = await _imagePicker.pickMultiImage(imageQuality: 80);
+      if (picked.isEmpty) {
+        return;
+      }
+
+      for (final image in picked) {
+        if (_pickedImages.length >= _maxProductImages) {
+          break;
+        }
+
+        final bytes = await image.readAsBytes();
+        if (bytes.length > 2 * 1024 * 1024) {
+          _showMessage('Ảnh "${image.name}" quá lớn (tối đa 2MB/ảnh).');
+          continue;
+        }
+
+        setState(() {
+          _pickedImages.add(image);
+          _imageBytes[image.path] = bytes;
+        });
+      }
+    } catch (_) {
+      _showMessage('Không thể chọn ảnh. Vui lòng thử lại.');
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      final removed = _pickedImages.removeAt(index);
+      _imageBytes.remove(removed.path);
+    });
+  }
+
   Future<void> _handlePost() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -113,18 +165,86 @@ class _SellScreenState extends State<SellScreen> {
       return;
     }
 
-    setState(() => _isUploading = true);
-
-    // BE chưa có POST /api/products — mock giống React reference.
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
-
-    if (!mounted) {
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null || userId.isEmpty) {
+      _showMessage('Vui lòng đăng nhập để đăng bán.');
       return;
     }
 
-    setState(() => _isUploading = false);
-    Navigator.of(context).pop();
-    _showMessage('Đăng sản phẩm thành công!');
+    final priceText = _priceController.text.trim().replaceAll('.', '');
+    final price = int.tryParse(priceText);
+    if (price == null || price <= 0) {
+      _showMessage('Giá bán phải lớn hơn 0');
+      return;
+    }
+
+    if (_pickedImages.isNotEmpty) {
+      final shouldContinue = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Chưa upload được ảnh'),
+          content: const Text(
+            'Backend chưa có API upload ảnh.\n\n'
+            'Sản phẩm sẽ được đăng không kèm hình ảnh. '
+            'Bạn có muốn tiếp tục không?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Huỷ'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Đăng không ảnh'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldContinue != true || !mounted) {
+        return;
+      }
+    }
+
+    setState(() => _isUploading = true);
+
+    try {
+      await _productRepository.createProduct(
+        userId: userId,
+        title: _nameController.text.trim(),
+        description: _descriptionController.text.trim(),
+        price: price,
+        category: _selectedCategory,
+        condition: _selectedCondition!,
+        quantity: _quantity,
+        locationName: _locationController.text.trim(),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      await context.read<ProductProvider>().refreshProducts();
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _isUploading = false);
+      Navigator.of(context).pop();
+      _showMessage('Đăng sản phẩm thành công!');
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isUploading = false);
+      _showMessage(error.message);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isUploading = false);
+      _showMessage('Không thể đăng sản phẩm. Vui lòng thử lại.');
+    }
   }
 
   void _showMessage(String message) {
@@ -154,8 +274,19 @@ class _SellScreenState extends State<SellScreen> {
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                 children: [
                   const _SectionLabel('Hình ảnh'),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Xem trước trên máy. Upload ảnh lên server cần BE có API upload.',
+                    style: TextStyle(fontSize: 12, color: AppColors.gray500, height: 1.4),
+                  ),
                   const SizedBox(height: 12),
-                  const _PhotoUploadRow(),
+                  _PhotoUploadRow(
+                    images: _pickedImages,
+                    imageBytes: _imageBytes,
+                    maxImages: _maxProductImages,
+                    onAdd: _pickImages,
+                    onRemove: _removeImage,
+                  ),
                   const SizedBox(height: 24),
                   _FormCard(
                     children: [
@@ -166,6 +297,9 @@ class _SellScreenState extends State<SellScreen> {
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Vui lòng nhập tên sản phẩm';
+                          }
+                          if (value.trim().length > 255) {
+                            return 'Tên sản phẩm tối đa 255 ký tự';
                           }
                           return null;
                         },
@@ -326,7 +460,19 @@ class _FormCard extends StatelessWidget {
 }
 
 class _PhotoUploadRow extends StatelessWidget {
-  const _PhotoUploadRow();
+  const _PhotoUploadRow({
+    required this.images,
+    required this.imageBytes,
+    required this.maxImages,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final List<XFile> images;
+  final Map<String, Uint8List> imageBytes;
+  final int maxImages;
+  final VoidCallback onAdd;
+  final ValueChanged<int> onRemove;
 
   static const _slotSize = 96.0;
 
@@ -337,67 +483,104 @@ class _PhotoUploadRow extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          Material(
-            color: AppColors.primaryLight,
-            borderRadius: BorderRadius.circular(16),
-            child: InkWell(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Tính năng chọn ảnh sẽ kết nối khi BE có API upload.'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
+          if (images.length < maxImages)
+            Material(
+              color: AppColors.primaryLight,
               borderRadius: BorderRadius.circular(16),
-              child: Container(
-                width: _slotSize,
-                height: _slotSize,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    width: 2,
-                    strokeAlign: BorderSide.strokeAlignInside,
+              child: InkWell(
+                onTap: onAdd,
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  width: _slotSize,
+                  height: _slotSize,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      width: 2,
+                      strokeAlign: BorderSide.strokeAlignInside,
+                    ),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.photo_camera_outlined, color: AppColors.primary, size: 24),
+                      SizedBox(height: 4),
+                      Text(
+                        'Thêm ảnh',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.photo_camera_outlined, color: AppColors.primary, size: 24),
-                    SizedBox(height: 4),
-                    Text(
-                      'Thêm ảnh',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          for (var i = 0; i < 3; i++) ...[
-            Container(
-              width: _slotSize,
-              height: _slotSize,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.upload_outlined,
-                color: AppColors.gray400,
-                size: 20,
-              ),
+          for (var i = 0; i < images.length; i++) ...[
+            if (i == 0 && images.length < maxImages) const SizedBox(width: 12),
+            _PickedImageTile(
+              bytes: imageBytes[images[i].path],
+              onRemove: () => onRemove(i),
             ),
-            if (i < 2) const SizedBox(width: 12),
+            if (i < images.length - 1) const SizedBox(width: 12),
           ],
         ],
       ),
+    );
+  }
+}
+
+class _PickedImageTile extends StatelessWidget {
+  const _PickedImageTile({
+    required this.bytes,
+    required this.onRemove,
+  });
+
+  final Uint8List? bytes;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            width: _PhotoUploadRow._slotSize,
+            height: _PhotoUploadRow._slotSize,
+            child: bytes == null
+                ? Container(
+                    color: const Color(0xFFF3F4F6),
+                    child: const Icon(Icons.image_outlined, color: AppColors.gray400),
+                  )
+                : Image.memory(
+                    bytes!,
+                    fit: BoxFit.cover,
+                  ),
+          ),
+        ),
+        Positioned(
+          top: -6,
+          right: -6,
+          child: Material(
+            color: AppColors.gray900,
+            shape: const CircleBorder(),
+            child: InkWell(
+              onTap: onRemove,
+              customBorder: const CircleBorder(),
+              child: const SizedBox(
+                width: 22,
+                height: 22,
+                child: Icon(Icons.close, size: 14, color: Colors.white),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

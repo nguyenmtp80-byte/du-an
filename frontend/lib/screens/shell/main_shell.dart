@@ -21,6 +21,8 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
   final _profileKey = GlobalKey<ProfileScreenState>();
+  final _chatKey = GlobalKey<ChatHistoryScreenState>();
+  int _chatUnreadCount = 0;
 
   @override
   void initState() {
@@ -28,6 +30,18 @@ class _MainShellState extends State<MainShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadCart();
       _loadUnreadNotifications();
+      _loadChatUnreadCount();
+    });
+  }
+
+  Future<void> _loadChatUnreadCount() async {
+    await _chatKey.currentState?.loadRooms();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _chatUnreadCount = _chatKey.currentState?.totalUnreadCount ?? 0;
     });
   }
 
@@ -50,6 +64,10 @@ class _MainShellState extends State<MainShell> {
 
     if (index == 1) {
       _loadCart();
+    }
+
+    if (index == 2) {
+      _loadChatUnreadCount();
     }
 
     if (index == 3) {
@@ -78,7 +96,7 @@ class _MainShellState extends State<MainShell> {
             embeddedInShell: true,
             onStartShopping: () => _onTabSelected(0),
           ),
-          const ChatHistoryScreen(),
+          ChatHistoryScreen(key: _chatKey),
           ProfileScreen(key: _profileKey),
         ],
       ),
@@ -96,7 +114,7 @@ class _MainShellState extends State<MainShell> {
       bottomNavigationBar: _AppBottomNavBar(
         currentIndex: _currentIndex,
         cartBadgeCount: cartCount,
-        chatBadgeCount: 0,
+        chatBadgeCount: _chatUnreadCount,
         onTabSelected: _onTabSelected,
       ),
     );
