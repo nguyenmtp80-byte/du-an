@@ -28,13 +28,17 @@ class AuthRepository {
     return _prefs ??= await SharedPreferences.getInstance();
   }
 
-  Future<AuthResponse> login({required String email}) async {
+  Future<AuthResponse> login({
+    required String email,
+    required String password,
+  }) async {
     final trimmedEmail = email.trim();
     final loginId = await _resolveLoginId(trimmedEmail);
 
     final response = await _authApiService.login(
       id: loginId,
       email: trimmedEmail,
+      password: password,
     );
 
     await _saveSession(response);
@@ -45,11 +49,15 @@ class AuthRepository {
     required String fullName,
     required String email,
     required String phone,
+    required String password,
+    required String confirmPassword,
     String? studentId,
   }) async {
     final response = await _authApiService.register(
       id: _uuid.v4(),
       email: email,
+      password: password,
+      confirmPassword: confirmPassword,
       fullName: fullName,
       phone: phone,
       studentId: studentId,

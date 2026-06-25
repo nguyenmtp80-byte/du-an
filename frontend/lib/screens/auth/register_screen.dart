@@ -49,6 +49,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       fullName: _fullNameController.text,
       email: _emailController.text,
       phone: _phoneController.text,
+      password: _passwordController.text,
+      confirmPassword: _confirmPasswordController.text,
       studentId: _studentIdController.text,
     );
 
