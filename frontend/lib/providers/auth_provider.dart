@@ -44,11 +44,17 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> login({required String email}) async {
+  Future<bool> login({
+    required String email,
+    required String password,
+  }) async {
     _beginSubmit();
 
     try {
-      final response = await _authRepository.login(email: email);
+      final response = await _authRepository.login(
+        email: email,
+        password: password,
+      );
       _user = response.user;
       _status = AuthStatus.authenticated;
       _errorMessage = null;
@@ -67,6 +73,8 @@ class AuthProvider extends ChangeNotifier {
     required String fullName,
     required String email,
     required String phone,
+    required String password,
+    required String confirmPassword,
     String? studentId,
   }) async {
     _beginSubmit();
@@ -76,6 +84,8 @@ class AuthProvider extends ChangeNotifier {
         fullName: fullName,
         email: email,
         phone: phone,
+        password: password,
+        confirmPassword: confirmPassword,
         studentId: studentId,
       );
       _user = response.user;

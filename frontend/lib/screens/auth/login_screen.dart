@@ -40,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final success = await auth.login(
       email: _emailController.text,
+      password: _passwordController.text,
     );
 
     if (!mounted) {

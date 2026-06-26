@@ -11,12 +11,14 @@ class AuthApiService {
   Future<AuthResponse> login({
     required String id,
     required String email,
+    required String password,
   }) async {
     final data = await _apiClient.post(
       ApiConfig.loginEndpoint,
       body: {
         'id': id,
         'email': email.trim(),
+        'password': password,
       },
     );
 
@@ -26,6 +28,8 @@ class AuthApiService {
   Future<AuthResponse> register({
     required String id,
     required String email,
+    required String password,
+    required String confirmPassword,
     String? fullName,
     String? phone,
     String? studentId,
@@ -36,6 +40,8 @@ class AuthApiService {
       body: {
         'id': id,
         'email': email.trim(),
+        'password': password,
+        'confirmPassword': confirmPassword,
         if (fullName != null && fullName.trim().isNotEmpty)
           'fullName': fullName.trim(),
         if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
