@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 
+import '../../models/chat.dart';
+import '../../services/api_client.dart';
+import '../../services/chat_api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,
+    required this.roomId,
+    required this.currentUserId,
     required this.partnerName,
-    this.partnerAvatarUrl,
-    this.isOnline = false,
     this.productName,
     this.productImageUrl,
     this.productPrice,
   });
 
+  final String roomId;
+  final String currentUserId;
   final String partnerName;
-  final String? partnerAvatarUrl;
-  final bool isOnline;
   final String? productName;
   final String? productImageUrl;
   final double? productPrice;
@@ -26,32 +29,140 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  final _chatApiService = ChatApiService();
   final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
 
-  @override
-  void dispose() {
-    _messageController.dispose();
-    super.dispose();
-  }
-
-  void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) {
-      return;
-    }
-
-    _messageController.clear();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Gửi tin nhắn sẽ kết nối API khi BE sẵn sàng.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
+  List<ChatMessage> _messages = [];
+  bool _isLoading = false;
+  bool _isSending = false;
+  String? _error;
 
   bool get _hasProductPreview {
     final name = widget.productName?.trim() ?? '';
     return name.isNotEmpty;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadMessages());
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMessages() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final messages = await _chatApiService.getMessages(
+        userId: widget.currentUserId,
+        roomId: widget.roomId,
+      );
+
+      await _chatApiService.markAsRead(
+        userId: widget.currentUserId,
+        roomId: widget.roomId,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _messages = messages;
+        _isLoading = false;
+      });
+      _scrollToBottom();
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _error = error.message;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _error = 'Không thể tải tin nhắn.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) {
+        return;
+      }
+
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  Future<void> _sendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty || _isSending) {
+      return;
+    }
+
+    setState(() => _isSending = true);
+    _messageController.clear();
+
+    try {
+      final message = await _chatApiService.sendMessage(
+        userId: widget.currentUserId,
+        roomId: widget.roomId,
+        message: text,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _messages = [..._messages, message];
+        _isSending = false;
+      });
+      _scrollToBottom();
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _isSending = false);
+      _messageController.text = text;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _isSending = false);
+      _messageController.text = text;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể gửi tin nhắn.')),
+      );
+    }
   }
 
   @override
@@ -62,8 +173,6 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           _ChatHeader(
             partnerName: widget.partnerName,
-            partnerAvatarUrl: widget.partnerAvatarUrl,
-            isOnline: widget.isOnline,
             onBack: () => Navigator.of(context).pop(),
           ),
           if (_hasProductPreview)
@@ -72,43 +181,153 @@ class _ChatScreenState extends State<ChatScreen> {
               productImageUrl: widget.productImageUrl,
               productPrice: widget.productPrice,
             ),
-          Expanded(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.forum_outlined,
-                      size: 48,
-                      color: AppColors.gray400.withValues(alpha: 0.8),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Chưa có tin nhắn',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.gray900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Bắt đầu trò chuyện với người bán.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: AppColors.gray500),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          Expanded(child: _buildMessageArea()),
           _ChatInputBar(
             controller: _messageController,
+            isSending: _isSending,
             onSend: _sendMessage,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMessageArea() {
+    if (_isLoading && _messages.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null && _messages.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text(
+            _error!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.gray700),
+          ),
+        ),
+      );
+    }
+
+    if (_messages.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.forum_outlined,
+                size: 48,
+                color: AppColors.gray400.withValues(alpha: 0.8),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Chưa có tin nhắn',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.gray900,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Bắt đầu trò chuyện với ${widget.partnerName}.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13, color: AppColors.gray500),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      itemCount: _messages.length,
+      itemBuilder: (context, index) {
+        final message = _messages[index];
+        final isMine = message.senderId == widget.currentUserId;
+
+        return _MessageBubble(
+          message: message.message,
+          isMine: isMine,
+          timeLabel: _formatMessageTime(message.createdAt),
+        );
+      },
+    );
+  }
+
+  String _formatMessageTime(DateTime? dateTime) {
+    if (dateTime == null) {
+      return '';
+    }
+
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+}
+
+class _MessageBubble extends StatelessWidget {
+  const _MessageBubble({
+    required this.message,
+    required this.isMine,
+    required this.timeLabel,
+  });
+
+  final String message;
+  final bool isMine;
+  final String timeLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.sizeOf(context).width * 0.75,
+        ),
+        decoration: BoxDecoration(
+          color: isMine ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(16),
+            topRight: const Radius.circular(16),
+            bottomLeft: Radius.circular(isMine ? 16 : 4),
+            bottomRight: Radius.circular(isMine ? 4 : 16),
+          ),
+          border: isMine ? null : Border.all(color: const Color(0xFFF3F4F6)),
+        ),
+        child: Column(
+          crossAxisAlignment:
+              isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            Text(
+              message,
+              style: TextStyle(
+                fontSize: 14,
+                color: isMine ? Colors.white : AppColors.gray900,
+                height: 1.4,
+              ),
+            ),
+            if (timeLabel.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                timeLabel,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isMine
+                      ? Colors.white.withValues(alpha: 0.8)
+                      : AppColors.gray400,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -117,19 +336,14 @@ class _ChatScreenState extends State<ChatScreen> {
 class _ChatHeader extends StatelessWidget {
   const _ChatHeader({
     required this.partnerName,
-    required this.partnerAvatarUrl,
-    required this.isOnline,
     required this.onBack,
   });
 
   final String partnerName;
-  final String? partnerAvatarUrl;
-  final bool isOnline;
   final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
-    final avatarUrl = partnerAvatarUrl?.trim() ?? '';
     final avatarLabel =
         partnerName.isNotEmpty ? partnerName[0].toUpperCase() : '?';
 
@@ -167,38 +381,16 @@ class _ChatHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Stack(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.primaryLight,
-                backgroundImage:
-                    avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-                child: avatarUrl.isEmpty
-                    ? Text(
-                        avatarLabel,
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    : null,
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppColors.primaryLight,
+            child: Text(
+              avatarLabel,
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
               ),
-              if (isOnline)
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF22C55E),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -213,20 +405,16 @@ class _ChatHeader extends StatelessWidget {
                     color: AppColors.gray900,
                   ),
                 ),
-                Text(
-                  isOnline ? 'Đang hoạt động' : 'Ngoại tuyến',
+                const Text(
+                  'Chat sản phẩm',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
-                    color: isOnline ? const Color(0xFF22C55E) : AppColors.gray400,
+                    color: AppColors.gray400,
                   ),
                 ),
               ],
             ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.more_vert, color: AppColors.gray400, size: 20),
           ),
         ],
       ),
@@ -256,13 +444,6 @@ class _ProductPreviewCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFF3F4F6)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Row(
         children: [
@@ -315,21 +496,6 @@ class _ProductPreviewCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              'Mua ngay',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -340,10 +506,12 @@ class _ChatInputBar extends StatelessWidget {
   const _ChatInputBar({
     required this.controller,
     required this.onSend,
+    required this.isSending,
   });
 
   final TextEditingController controller;
   final VoidCallback onSend;
+  final bool isSending;
 
   @override
   Widget build(BuildContext context) {
@@ -360,10 +528,6 @@ class _ChatInputBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.image_outlined, color: AppColors.gray400, size: 24),
-          ),
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -371,31 +535,19 @@ class _ChatInputBar extends StatelessWidget {
                 color: const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(999),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      decoration: const InputDecoration(
-                        hintText: 'Nhập tin nhắn...',
-                        hintStyle: TextStyle(color: AppColors.gray400, fontSize: 14),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(vertical: 10),
-                      ),
-                      style: const TextStyle(fontSize: 14),
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => onSend(),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.emoji_emotions_outlined,
-                        color: AppColors.gray400, size: 20),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  ),
-                ],
+              child: TextField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  hintText: 'Nhập tin nhắn...',
+                  hintStyle: TextStyle(color: AppColors.gray400, fontSize: 14),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(vertical: 10),
+                ),
+                style: const TextStyle(fontSize: 14),
+                textInputAction: TextInputAction.send,
+                enabled: !isSending,
+                onSubmitted: (_) => onSend(),
               ),
             ),
           ),
@@ -403,15 +555,21 @@ class _ChatInputBar extends StatelessWidget {
           Material(
             color: AppColors.primary,
             shape: const CircleBorder(),
-            elevation: 4,
-            shadowColor: AppColors.primary.withValues(alpha: 0.3),
             child: InkWell(
-              onTap: onSend,
+              onTap: isSending ? null : onSend,
               customBorder: const CircleBorder(),
-              child: const SizedBox(
+              child: SizedBox(
                 width: 40,
                 height: 40,
-                child: Icon(Icons.send, color: Colors.white, size: 18),
+                child: isSending
+                    ? const Padding(
+                        padding: EdgeInsets.all(10),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.send, color: Colors.white, size: 18),
               ),
             ),
           ),

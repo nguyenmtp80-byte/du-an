@@ -97,7 +97,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
       }
 
       Navigator.of(context).pop();
-      await showOrderDetailSheet(context: context, order: order);
+      await showOrderDetailSheet(
+        context: context,
+        order: order,
+        enableBuyerActions: order.buyerId == userId,
+        orderApiService: _orderApiService,
+        userId: userId,
+        onOrderUpdated: _loadOrders,
+      );
     } on ApiException catch (error) {
       if (!mounted) {
         return;

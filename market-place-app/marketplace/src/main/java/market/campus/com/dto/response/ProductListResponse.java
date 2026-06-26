@@ -15,6 +15,8 @@ public class ProductListResponse {
     private String status;
     private Integer quantity;
     private String locationName;
+    private Double latitude;
+    private Double longitude;
     private SellerInfoResponse seller;
     private LocalDateTime createdAt;
 
@@ -23,6 +25,7 @@ public class ProductListResponse {
     public ProductListResponse(String id, String name, String description, BigDecimal price,
                                List<String> imageUrls, String category, String condition,
                                String status, Integer quantity, String locationName,
+                               Double latitude, Double longitude,
                                SellerInfoResponse seller, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
@@ -34,6 +37,8 @@ public class ProductListResponse {
         this.status = status;
         this.quantity = quantity;
         this.locationName = locationName;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.seller = seller;
         this.createdAt = createdAt;
     }
@@ -68,6 +73,12 @@ public class ProductListResponse {
 
     public String getLocationName() { return locationName; }
     public void setLocationName(String locationName) { this.locationName = locationName; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 
     public SellerInfoResponse getSeller() { return seller; }
     public void setSeller(SellerInfoResponse seller) { this.seller = seller; }

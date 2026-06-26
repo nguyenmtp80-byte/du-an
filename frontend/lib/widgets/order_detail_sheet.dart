@@ -54,6 +54,7 @@ Future<void> showOrderDetailSheet({
   required BuildContext context,
   required Order order,
   bool enableSellerActions = false,
+  bool enableBuyerActions = false,
   OrderApiService? orderApiService,
   String? userId,
   VoidCallback? onOrderUpdated,
@@ -65,6 +66,7 @@ Future<void> showOrderDetailSheet({
     builder: (context) => _OrderDetailSheet(
       order: order,
       enableSellerActions: enableSellerActions,
+      enableBuyerActions: enableBuyerActions,
       orderApiService: orderApiService,
       userId: userId,
       onOrderUpdated: onOrderUpdated,
@@ -76,6 +78,7 @@ class _OrderDetailSheet extends StatefulWidget {
   const _OrderDetailSheet({
     required this.order,
     this.enableSellerActions = false,
+    this.enableBuyerActions = false,
     this.orderApiService,
     this.userId,
     this.onOrderUpdated,
@@ -83,6 +86,7 @@ class _OrderDetailSheet extends StatefulWidget {
 
   final Order order;
   final bool enableSellerActions;
+  final bool enableBuyerActions;
   final OrderApiService? orderApiService;
   final String? userId;
   final VoidCallback? onOrderUpdated;
@@ -106,6 +110,9 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
 
   bool get _canComplete =>
       widget.enableSellerActions && _order.status.toUpperCase() == 'APPROVED';
+
+  bool get _canCancel =>
+      widget.enableBuyerActions && _order.status.toUpperCase() == 'PENDING';
 
   Future<void> _handleAccept() async {
     final userId = widget.userId;
@@ -187,6 +194,71 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Không thể hoàn tất đơn hàng.')),
+      );
+    }
+  }
+
+  Future<void> _handleCancel() async {
+    final userId = widget.userId;
+    final api = widget.orderApiService;
+    if (userId == null || api == null) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hủy đơn hàng'),
+        content: const Text('Bạn có chắc muốn hủy đơn hàng này?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Không'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            child: const Text('Hủy đơn'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final updated = await api.cancelOrder(userId: userId, orderId: _order.id);
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _order = updated;
+        _isSubmitting = false;
+      });
+      widget.onOrderUpdated?.call();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã hủy đơn hàng.')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể hủy đơn hàng.')),
       );
     }
   }
@@ -387,6 +459,30 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
                         ),
                       )
                     : const Text('Hoàn tất đơn'),
+              ),
+            ),
+          if (_canCancel)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: FilledButton(
+                onPressed: _isSubmitting ? null : _handleCancel,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC2626),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Hủy đơn'),
               ),
             ),
           FilledButton(

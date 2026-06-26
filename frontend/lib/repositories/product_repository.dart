@@ -59,6 +59,35 @@ class ProductRepository {
     return Product.fromJson(response);
   }
 
+  Future<Product> createProduct({
+    required String userId,
+    required String title,
+    required String description,
+    required int price,
+    required String category,
+    required String condition,
+    required int quantity,
+    String? locationName,
+    List<String>? imageUrls,
+  }) async {
+    final response = await _productApiService.createProduct(
+      userId: userId,
+      body: {
+        'title': title,
+        'description': description,
+        'price': price,
+        'category': category,
+        'condition': condition,
+        'quantity': quantity,
+        if (locationName != null && locationName.trim().isNotEmpty)
+          'locationName': locationName.trim(),
+        if (imageUrls != null && imageUrls.isNotEmpty) 'imageUrls': imageUrls,
+      },
+    );
+
+    return Product.fromJson(response);
+  }
+
   bool _shouldUseDetailFallback(ApiException error) {
     final code = error.statusCode;
     if (code == null) {

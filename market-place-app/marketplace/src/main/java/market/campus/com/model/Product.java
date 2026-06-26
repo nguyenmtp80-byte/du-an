@@ -43,6 +43,12 @@ public class Product {
     @Column(name = "location_name", length = 255)
     private String locationName;
 
+    @Column(nullable = true)
+    private Double latitude;
+
+    @Column(nullable = true)
+    private Double longitude;
+
     @ManyToOne
     @JoinColumn(name = "seller_id", nullable = false)
     private User seller;
@@ -55,7 +61,8 @@ public class Product {
 
     public Product(String id, String title, String description, BigDecimal price,
                    String[] imageUrls, String category, ProductCondition condition,
-                   ProductStatus status, Integer quantity, String locationName, User seller) {
+                   ProductStatus status, Integer quantity, String locationName,
+                   Double latitude, Double longitude, User seller) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -66,6 +73,8 @@ public class Product {
         this.status = status;
         this.quantity = quantity != null ? quantity : 1;
         this.locationName = locationName;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.seller = seller;
     }
 
@@ -99,6 +108,12 @@ public class Product {
 
     public String getLocationName() { return locationName; }
     public void setLocationName(String locationName) { this.locationName = locationName; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 
     public User getSeller() { return seller; }
     public void setSeller(User seller) { this.seller = seller; }

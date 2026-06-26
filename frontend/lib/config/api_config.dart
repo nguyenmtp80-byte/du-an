@@ -37,7 +37,12 @@ class ApiConfig {
   static const String sellerOrdersEndpoint = '/orders/seller/list';
   static String orderDetailEndpoint(String orderId) => '/orders/$orderId';
   static String orderAcceptEndpoint(String orderId) => '/orders/$orderId/accept';
+  static String orderCancelEndpoint(String orderId) => '/orders/$orderId/cancel';
   static String orderCompleteEndpoint(String orderId) => '/orders/$orderId/complete';
+
+  static const String chatRoomsEndpoint = '/chat/rooms';
+  static String chatRoomMessagesEndpoint(String roomId) => '/chat/rooms/$roomId/messages';
+  static String chatRoomReadEndpoint(String roomId) => '/chat/rooms/$roomId/read';
 
   static const String notificationsEndpoint = '/notifications';
   static const String notificationsUnreadCountEndpoint = '/notifications/unread/count';

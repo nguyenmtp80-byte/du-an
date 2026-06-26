@@ -24,6 +24,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponse(ex.getMessage(), ex.getStatus());
     }
 
+    @ExceptionHandler(InvalidDataException.class)
+    public ResponseEntity<Object> handleInvalidDataException(InvalidDataException ex) {
+        return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Object> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        return buildResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException ex) {
         return buildResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);

@@ -92,6 +92,18 @@ class OrderApiService {
     return _parseOrderResponse(response);
   }
 
+  Future<Order> cancelOrder({
+    required String userId,
+    required String orderId,
+  }) async {
+    final response = await _apiClient.put(
+      ApiConfig.orderCancelEndpoint(orderId),
+      extraHeaders: {'X-User-Id': userId},
+    );
+
+    return _parseOrderResponse(response);
+  }
+
   Order _parseOrderResponse(Map<String, dynamic> response) {
     final data = response['data'];
     if (data is Map<String, dynamic>) {

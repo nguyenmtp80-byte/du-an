@@ -1,6 +1,7 @@
 package market.campus.com.controller;
 
 import market.campus.com.dto.request.CreateProductRequest;
+import market.campus.com.dto.response.NearbyProductResponse;
 import market.campus.com.dto.response.ProductDetailResponse;
 import market.campus.com.dto.response.ProductListResponse;
 import market.campus.com.service.ProductService;
@@ -51,6 +52,26 @@ public class ProductController {
         try {
             ProductDetailResponse product = productService.createProduct(userId, request);
             return ResponseEntity.ok(product);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * GET /api/products/nearby - Tìm sản phẩm gần vị trí người dùng
+     * Query params: lat (latitude), lng (longitude), radius (km)
+     * LƯU Ý: Phải đặt trước /{productId} để tránh xung đột route
+     */
+    @GetMapping("/nearby")
+    public ResponseEntity<?> getNearbyProducts(
+            @RequestParam("lat") Double latitude,
+            @RequestParam("lng") Double longitude,
+            @RequestParam(name = "radius", defaultValue = "5") Double radiusKm) {
+        try {
+            List<NearbyProductResponse> products = productService.getNearbyProducts(
+                    latitude, longitude, radiusKm
+            );
+            return ResponseEntity.ok(products);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }

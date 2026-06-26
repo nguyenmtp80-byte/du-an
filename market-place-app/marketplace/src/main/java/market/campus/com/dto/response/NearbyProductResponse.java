@@ -4,41 +4,43 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class ProductDetailResponse {
+public class NearbyProductResponse {
     private String id;
-    private String title;
+    private String name;
     private String description;
     private BigDecimal price;
+    private List<String> imageUrls;
     private String category;
     private String condition;
     private String status;
     private Integer quantity;
-    private List<String> imageUrls;
     private String locationName;
     private Double latitude;
     private Double longitude;
+    private Double distance; // Khoảng cách tính bằng km
     private SellerInfoResponse seller;
     private LocalDateTime createdAt;
 
-    public ProductDetailResponse() {}
+    public NearbyProductResponse() {}
 
-    public ProductDetailResponse(String id, String title, String description, BigDecimal price,
-                                 String category, String condition, String status,
-                                 Integer quantity, List<String> imageUrls, String locationName,
-                                 Double latitude, Double longitude,
+    public NearbyProductResponse(String id, String name, String description, BigDecimal price,
+                                 List<String> imageUrls, String category, String condition,
+                                 String status, Integer quantity, String locationName,
+                                 Double latitude, Double longitude, Double distance,
                                  SellerInfoResponse seller, LocalDateTime createdAt) {
         this.id = id;
-        this.title = title;
+        this.name = name;
         this.description = description;
         this.price = price;
+        this.imageUrls = imageUrls;
         this.category = category;
         this.condition = condition;
         this.status = status;
         this.quantity = quantity;
-        this.imageUrls = imageUrls;
         this.locationName = locationName;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.distance = distance;
         this.seller = seller;
         this.createdAt = createdAt;
     }
@@ -47,14 +49,17 @@ public class ProductDetailResponse {
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
+
+    public List<String> getImageUrls() { return imageUrls; }
+    public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls; }
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
@@ -68,9 +73,6 @@ public class ProductDetailResponse {
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
-    public List<String> getImageUrls() { return imageUrls; }
-    public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls; }
-
     public String getLocationName() { return locationName; }
     public void setLocationName(String locationName) { this.locationName = locationName; }
 
@@ -79,6 +81,9 @@ public class ProductDetailResponse {
 
     public Double getLongitude() { return longitude; }
     public void setLongitude(Double longitude) { this.longitude = longitude; }
+
+    public Double getDistance() { return distance; }
+    public void setDistance(Double distance) { this.distance = distance; }
 
     public SellerInfoResponse getSeller() { return seller; }
     public void setSeller(SellerInfoResponse seller) { this.seller = seller; }

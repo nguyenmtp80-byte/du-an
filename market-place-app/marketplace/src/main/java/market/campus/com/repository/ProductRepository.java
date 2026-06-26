@@ -31,4 +31,26 @@ public interface ProductRepository extends JpaRepository<Product, String> {
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice
     );
+
+    /**
+     * Tìm sản phẩm gần vị trí người dùng bằng công thức Haversine.
+     * Lọc các sản phẩm có tọa độ và status = 'available',
+     * tính khoảng cách (km) từ vị trí người dùng (userLat, userLon) đến sản phẩm.
+     * Chỉ trả về sản phẩm có khoảng cách <= radiusKm.
+     */
+    @Query(value = "SELECT p.* FROM products p " +
+           "WHERE p.latitude IS NOT NULL " +
+           "AND p.longitude IS NOT NULL " +
+           "AND p.status = 'available' " +
+           "AND (6371 * acos(cos(radians(:userLat)) * cos(radians(p.latitude)) * " +
+           "cos(radians(p.longitude) - radians(:userLon)) + " +
+           "sin(radians(:userLat)) * sin(radians(p.latitude)))) <= :radiusKm " +
+           "ORDER BY (6371 * acos(cos(radians(:userLat)) * cos(radians(p.latitude)) * " +
+           "cos(radians(p.longitude) - radians(:userLon)) + " +
+           "sin(radians(:userLat)) * sin(radians(p.latitude)))) ASC", nativeQuery = true)
+    List<Product> findNearbyProducts(
+            @Param("userLat") Double userLat,
+            @Param("userLon") Double userLon,
+            @Param("radiusKm") Double radiusKm
+    );
 }
