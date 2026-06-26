@@ -11,12 +11,15 @@ public class CreateProductRequest {
     private String condition;
     private Integer quantity;
     private String locationName;
+    private Double latitude;
+    private Double longitude;
 
     public CreateProductRequest() {}
 
     public CreateProductRequest(String title, String description, Integer price,
                                 List<String> imageUrls, String category, String condition,
-                                Integer quantity, String locationName) {
+                                Integer quantity, String locationName,
+                                Double latitude, Double longitude) {
         this.title = title;
         this.description = description;
         this.price = price;
@@ -25,6 +28,8 @@ public class CreateProductRequest {
         this.condition = condition;
         this.quantity = quantity;
         this.locationName = locationName;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     // Getters and Setters
@@ -51,4 +56,10 @@ public class CreateProductRequest {
 
     public String getLocationName() { return locationName; }
     public void setLocationName(String locationName) { this.locationName = locationName; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }
