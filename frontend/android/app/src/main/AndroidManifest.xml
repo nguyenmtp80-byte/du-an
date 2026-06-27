@@ -5,7 +5,7 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <application
-        android:label="student_marketplace"
+        android:label="Student Marketplace"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

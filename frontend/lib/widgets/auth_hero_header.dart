@@ -63,42 +63,38 @@ class AuthHeroHeader extends StatelessWidget {
             ),
           Center(
             child: Padding(
-              padding: const EdgeInsets.only(top: 32),
+              padding: EdgeInsets.only(
+                top: showBackButton ? 24 : 32,
+                left: 24,
+                right: 24,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Transform.rotate(
-                    angle: 0.05,
-                    child: Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.15),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.asset(
+                        'assets/images/app_logo.png',
+                        width: 180,
+                        fit: BoxFit.contain,
                       ),
-                      alignment: Alignment.center,
-                      child: const Text('🛍️', style: TextStyle(fontSize: 40)),
                     ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Campus Marketplace',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.gray900,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
                     'Mua bán cùng sinh viên trong trường',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.gray500,

@@ -1,11 +1,11 @@
 {
-    "name": "student_marketplace",
-    "short_name": "student_marketplace",
+    "name": "Student Marketplace",
+    "short_name": "Marketplace",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#F97316",
+    "description": "Mua bán cùng sinh viên trong trường",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
