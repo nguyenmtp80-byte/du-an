@@ -3,14 +3,18 @@ import 'package:provider/provider.dart';
 
 import '../../models/cart_item.dart';
 import '../../models/order.dart';
+import '../../models/product.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/api_client.dart';
 import '../../services/order_api_service.dart';
+import '../../repositories/product_repository.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
+import '../../utils/product_location_utils.dart';
 import '../../utils/validators.dart';
 import '../../widgets/auth_text_field.dart';
+import '../../widgets/location_map_sheet.dart';
 import '../../widgets/order_detail_sheet.dart';
 import '../../widgets/screen_header.dart';
 
@@ -25,14 +29,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _locationController = TextEditingController();
   final _notesController = TextEditingController();
   final _orderApiService = OrderApiService();
+  final _productRepository = ProductRepository();
 
   String _paymentMethod = 'CASH';
   bool _isSubmitting = false;
   bool _isSuccess = false;
+  bool _isLoadingLocations = false;
   Order? _placedOrder;
+  List<Product> _cartProducts = [];
+  String _meetingLocationText = '';
 
   @override
   void initState() {
@@ -41,20 +48,71 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final user = context.read<AuthProvider>().user;
       _nameController.text = user?.fullName ?? '';
       _phoneController.text = user?.phone ?? '';
-      _locationController.text = 'Thư viện chính - Cổng trước, gần quán cà phê';
 
       final userId = user?.id;
       if (userId != null && userId.isNotEmpty) {
-        context.read<CartProvider>().loadCart(userId);
+        context.read<CartProvider>().loadCart(userId).then((_) {
+          if (mounted) {
+            _loadProductLocations();
+          }
+        });
       }
     });
+  }
+
+  Future<void> _loadProductLocations() async {
+    final cartItems = context.read<CartProvider>().cart.items;
+    if (cartItems.isEmpty) {
+      setState(() {
+        _cartProducts = [];
+        _meetingLocationText = '';
+      });
+      return;
+    }
+
+    setState(() => _isLoadingLocations = true);
+
+    final products = <Product>[];
+    for (final item in cartItems) {
+      try {
+        products.add(await _productRepository.fetchProductDetail(item.productId));
+      } on ApiException {
+        // Bỏ qua sản phẩm không tải được.
+      } catch (_) {
+        // Bỏ qua sản phẩm không tải được.
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _cartProducts = products;
+      _meetingLocationText = summarizeProductLocations(products);
+      _isLoadingLocations = false;
+    });
+  }
+
+  void _openMeetingLocationMap() {
+    final product = firstProductWithMap(_cartProducts);
+    if (product == null) {
+      _showMessage('Sản phẩm chưa có tọa độ trên bản đồ.');
+      return;
+    }
+
+    LocationMapSheet.viewLocation(
+      context,
+      latitude: product.latitude!,
+      longitude: product.longitude!,
+      locationLabel: product.locationName,
+    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _locationController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -139,7 +197,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         deliveryInfo: {
           'receiverName': _nameController.text.trim(),
           'receiverPhone': _phoneController.text.trim(),
-          'deliveryLocation': _locationController.text.trim(),
+          'deliveryLocation': _meetingLocationText,
           'notes': _notesController.text.trim(),
         },
       );
@@ -277,16 +335,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             validator: Validators.phone,
                           ),
                           const SizedBox(height: 12),
-                          AuthTextField(
-                            controller: _locationController,
-                            hintText: 'Địa điểm giao dịch trong trường',
-                            prefixIcon: Icons.place_outlined,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Vui lòng nhập địa điểm gặp mặt';
-                              }
-                              return null;
-                            },
+                          _MeetingLocationField(
+                            locationText: _meetingLocationText,
+                            isLoading: _isLoadingLocations,
+                            onViewMap: _openMeetingLocationMap,
+                            hasMap: firstProductWithMap(_cartProducts) != null,
                           ),
                           const SizedBox(height: 12),
                           AuthTextField(
@@ -409,6 +462,89 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MeetingLocationField extends StatelessWidget {
+  const _MeetingLocationField({
+    required this.locationText,
+    required this.isLoading,
+    required this.onViewMap,
+    required this.hasMap,
+  });
+
+  final String locationText;
+  final bool isLoading;
+  final VoidCallback onViewMap;
+  final bool hasMap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.gray50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.place_outlined, color: AppColors.gray400, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Địa điểm giao dịch (từ sản phẩm)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.gray500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isLoading ? 'Đang tải...' : locationText,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.gray900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (hasMap)
+                IconButton(
+                  onPressed: onViewMap,
+                  icon: const Icon(Icons.map_outlined, color: AppColors.primary),
+                  tooltip: 'Xem bản đồ',
+                ),
+            ],
+          ),
+          if (hasMap) ...[
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: onViewMap,
+              icon: const Icon(Icons.map_outlined, size: 18),
+              label: const Text('Xem vị trí trên bản đồ'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primarySoft),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

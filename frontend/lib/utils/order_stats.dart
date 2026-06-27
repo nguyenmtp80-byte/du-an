@@ -18,14 +18,20 @@ int countSoldItemQuantity(List<Order> sellerOrders) {
 }
 
 int countBoughtItemQuantity(List<Order> buyerOrders) {
-  return countOrderItemQuantity(buyerOrders);
+  return countOrderItemQuantity(
+    buyerOrders
+        .where((order) => order.status.toUpperCase() == 'COMPLETED')
+        .toList(),
+  );
 }
 
 int countSoldOrderItemQuantity(List<Order> sellerOrders) {
   return countOrderItemQuantity(
     sellerOrders.where((order) {
       final status = order.status.toUpperCase();
-      return status == 'APPROVED' || status == 'COMPLETED';
+      return status == 'PENDING' ||
+          status == 'APPROVED' ||
+          status == 'COMPLETED';
     }).toList(),
   );
 }

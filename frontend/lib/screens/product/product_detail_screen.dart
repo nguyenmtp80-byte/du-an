@@ -7,6 +7,7 @@ import '../../providers/cart_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
+import '../../widgets/location_map_sheet.dart';
 import '../cart/cart_screen.dart';
 import '../chat/chat_screen.dart';
 import '../../services/api_client.dart';
@@ -612,6 +613,60 @@ class _DescriptionSection extends StatelessWidget {
               height: 1.5,
             ),
           ),
+          if (product.locationName != null &&
+              product.locationName!.trim().isNotEmpty) ...[
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    color: AppColors.gray50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: AppColors.gray400,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Địa điểm giao dịch',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.gray900,
+                        ),
+                      ),
+                      Text(
+                        product.locationName!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.gray500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (product.hasMapLocation)
+                  IconButton(
+                    onPressed: () => LocationMapSheet.viewLocation(
+                      context,
+                      latitude: product.latitude!,
+                      longitude: product.longitude!,
+                      locationLabel: product.locationName,
+                    ),
+                    icon: const Icon(Icons.map_outlined, color: AppColors.primary),
+                    tooltip: 'Xem bản đồ',
+                  ),
+              ],
+            ),
+          ],
           if (product.seller?.phone != null &&
               product.seller!.phone!.trim().isNotEmpty) ...[
             const SizedBox(height: 24),

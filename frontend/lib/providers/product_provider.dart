@@ -26,7 +26,7 @@ class ProductProvider extends ChangeNotifier {
 
   String _searchQuery = '';
   String _activeCategory = 'All';
-  String? _statusFilter;
+  String? _conditionFilter;
   double? _minPrice;
   double? _maxPrice;
 
@@ -39,7 +39,7 @@ class ProductProvider extends ChangeNotifier {
   bool get isUsingDetailFallback => _isUsingDetailFallback;
   String get searchQuery => _searchQuery;
   String get activeCategory => _activeCategory;
-  String? get statusFilter => _statusFilter;
+  String? get conditionFilter => _conditionFilter;
   double? get minPrice => _minPrice;
   double? get maxPrice => _maxPrice;
 
@@ -62,8 +62,8 @@ class ProductProvider extends ChangeNotifier {
       final matchesCategory = _activeCategory == 'All' ||
           product.categoryName == _activeCategory;
 
-      final matchesStatus = _statusFilter == null ||
-          productStatusMatchesFilter(product.status, _statusFilter!);
+      final matchesCondition = _conditionFilter == null ||
+          productConditionMatchesFilter(product.condition, _conditionFilter!);
 
       final matchesMinPrice =
           _minPrice == null || product.price >= _minPrice!;
@@ -73,7 +73,7 @@ class ProductProvider extends ChangeNotifier {
 
       return matchesSearch &&
           matchesCategory &&
-          matchesStatus &&
+          matchesCondition &&
           matchesMinPrice &&
           matchesMaxPrice;
     }).toList();
@@ -95,7 +95,6 @@ class ProductProvider extends ChangeNotifier {
       _products = await _productRepository.fetchProducts(
         search: _searchQuery,
         category: _activeCategory,
-        status: _statusFilter,
         minPrice: _minPrice,
         maxPrice: _maxPrice,
       );
@@ -156,8 +155,8 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setStatusFilter(String? status) {
-    _statusFilter = status;
+  void setConditionFilter(String? condition) {
+    _conditionFilter = condition;
     notifyListeners();
   }
 
@@ -169,7 +168,7 @@ class ProductProvider extends ChangeNotifier {
 
   void clearFilters() {
     _activeCategory = 'All';
-    _statusFilter = null;
+    _conditionFilter = null;
     _minPrice = null;
     _maxPrice = null;
     notifyListeners();

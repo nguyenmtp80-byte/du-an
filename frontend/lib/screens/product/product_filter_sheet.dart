@@ -14,7 +14,7 @@ class ProductFilterSheet extends StatefulWidget {
 class _ProductFilterSheetState extends State<ProductFilterSheet> {
   late final TextEditingController _minPriceController;
   late final TextEditingController _maxPriceController;
-  String? _selectedStatus;
+  String? _selectedCondition;
   late String _selectedCategory;
 
   static const _categoryOptions = [
@@ -29,7 +29,7 @@ class _ProductFilterSheetState extends State<ProductFilterSheet> {
   void initState() {
     super.initState();
     final provider = context.read<ProductProvider>();
-    _selectedStatus = provider.statusFilter;
+    _selectedCondition = provider.conditionFilter;
     _selectedCategory = _displayCategory(provider.activeCategory);
     _minPriceController = TextEditingController(
       text: provider.minPrice?.round().toString() ?? '',
@@ -72,7 +72,7 @@ class _ProductFilterSheetState extends State<ProductFilterSheet> {
   Future<void> _applyFilters() async {
     final provider = context.read<ProductProvider>();
     provider.setActiveCategory(_providerCategory(_selectedCategory));
-    provider.setStatusFilter(_selectedStatus);
+    provider.setConditionFilter(_selectedCondition);
     provider.setPriceRange(
       minPrice: _parsePrice(_minPriceController.text),
       maxPrice: _parsePrice(_maxPriceController.text),
@@ -91,7 +91,7 @@ class _ProductFilterSheetState extends State<ProductFilterSheet> {
     provider.clearFilters();
 
     setState(() {
-      _selectedStatus = null;
+      _selectedCondition = null;
       _selectedCategory = 'Tất cả';
       _minPriceController.clear();
       _maxPriceController.clear();
@@ -159,18 +159,23 @@ class _ProductFilterSheetState extends State<ProductFilterSheet> {
             children: [
               _FilterChip(
                 label: 'Tất cả',
-                selected: _selectedStatus == null,
-                onTap: () => setState(() => _selectedStatus = null),
+                selected: _selectedCondition == null,
+                onTap: () => setState(() => _selectedCondition = null),
               ),
               _FilterChip(
-                label: 'Còn hàng',
-                selected: _selectedStatus == 'available',
-                onTap: () => setState(() => _selectedStatus = 'available'),
+                label: 'Mới',
+                selected: _selectedCondition == 'NEW',
+                onTap: () => setState(() => _selectedCondition = 'NEW'),
               ),
               _FilterChip(
-                label: 'Hết hàng',
-                selected: _selectedStatus == 'sold',
-                onTap: () => setState(() => _selectedStatus = 'sold'),
+                label: 'Như mới',
+                selected: _selectedCondition == 'LIKE_NEW',
+                onTap: () => setState(() => _selectedCondition = 'LIKE_NEW'),
+              ),
+              _FilterChip(
+                label: 'Đã sử dụng',
+                selected: _selectedCondition == 'USED',
+                onTap: () => setState(() => _selectedCondition = 'USED'),
               ),
             ],
           ),

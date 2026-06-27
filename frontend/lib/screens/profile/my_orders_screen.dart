@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/order.dart';
+import '../../models/product.dart';
 import '../../providers/auth_provider.dart';
+import '../../repositories/product_repository.dart';
 import '../../services/api_client.dart';
 import '../../services/order_api_service.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/formatters.dart';
 import '../../widgets/order_detail_sheet.dart';
+import '../../widgets/order_list_card.dart';
 import '../../widgets/screen_header.dart';
 
 class MyOrdersScreen extends StatefulWidget {
@@ -19,16 +21,22 @@ class MyOrdersScreen extends StatefulWidget {
 
 class _MyOrdersScreenState extends State<MyOrdersScreen> {
   final _orderApiService = OrderApiService();
+  final _productRepository = ProductRepository();
 
   List<Order> _orders = [];
+  Map<String, Product> _productCache = {};
   bool _isLoading = false;
   String? _error;
+  OrderListTab _selectedTab = OrderListTab.completed;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadOrders());
   }
+
+  List<Order> get _filteredOrders =>
+      filterAndSortOrders(_orders, _selectedTab);
 
   Future<void> _loadOrders() async {
     final userId = context.read<AuthProvider>().user?.id;
@@ -51,6 +59,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
         _orders = orders;
         _isLoading = false;
       });
+
+      await _loadProductCache(orders);
     } on ApiException catch (error) {
       if (!mounted) {
         return;
@@ -69,6 +79,34 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
         _error = 'Không thể tải lịch sử mua hàng.';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadProductCache(List<Order> orders) async {
+    final productIds = <String>{};
+    for (final order in orders) {
+      for (final item in order.items) {
+        if (item.productId.isNotEmpty) {
+          productIds.add(item.productId);
+        }
+      }
+    }
+
+    final cache = Map<String, Product>.from(_productCache);
+    for (final productId in productIds) {
+      if (cache.containsKey(productId)) {
+        continue;
+      }
+
+      try {
+        cache[productId] = await _productRepository.fetchProductDetail(productId);
+      } on ApiException {
+        // Bỏ qua sản phẩm không tải được.
+      } catch (_) {}
+    }
+
+    if (mounted) {
+      setState(() => _productCache = cache);
     }
   }
 
@@ -126,13 +164,30 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
     }
   }
 
+  String _sellerLabel(Order order) {
+    if (order.items.isEmpty) {
+      return 'Người bán';
+    }
+
+    final product = _productCache[order.items.first.productId];
+    final sellerName = product?.sellerName.trim();
+    if (sellerName != null && sellerName.isNotEmpty) {
+      return sellerName;
+    }
+    return 'Người bán';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.gray50,
       body: Column(
         children: [
-          const ScreenHeader(title: 'Đơn hàng mua'),
+          const ScreenHeader(title: 'Đơn đã mua'),
+          OrderListTabBar(
+            selectedTab: _selectedTab,
+            onTabSelected: (tab) => setState(() => _selectedTab = tab),
+          ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadOrders,
@@ -166,24 +221,28 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
       );
     }
 
-    if (_orders.isEmpty) {
+    final orders = _filteredOrders;
+
+    if (orders.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 80),
-          Icon(Icons.shopping_bag_outlined, size: 56, color: AppColors.gray400),
-          SizedBox(height: 16),
+        children: [
+          const SizedBox(height: 80),
+          const Icon(Icons.shopping_bag_outlined, size: 56, color: AppColors.gray400),
+          const SizedBox(height: 16),
           Text(
-            'Chưa có đơn hàng nào',
+            _selectedTab == OrderListTab.all
+                ? 'Chưa có đơn hàng nào'
+                : 'Không có đơn hàng trong mục này',
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppColors.gray900,
             ),
           ),
-          SizedBox(height: 8),
-          Text(
+          const SizedBox(height: 8),
+          const Text(
             'Lịch sử mua hàng sẽ hiển thị tại đây.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.gray500),
@@ -194,59 +253,16 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-      itemCount: _orders.length,
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+      itemCount: orders.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        final order = _orders[index];
-
-        return Material(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => _openOrderDetail(order.id),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          orderDisplayTitle(order),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.gray900,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          formatPrice(order.totalAmount),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          formatOrderStatusLabel(order.status),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.gray500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.chevron_right, color: AppColors.gray400),
-                ],
-              ),
-            ),
-          ),
+        final order = orders[index];
+        return OrderListCard(
+          order: order,
+          productCache: _productCache,
+          headerLabel: _sellerLabel(order),
+          onOpenDetail: () => _openOrderDetail(order.id),
         );
       },
     );

@@ -55,6 +55,8 @@ class Product {
     this.quantity = 0,
     this.description,
     this.locationName,
+    this.latitude,
+    this.longitude,
     this.images = const [],
     this.seller,
     this.createdAt,
@@ -69,6 +71,8 @@ class Product {
   final String status;
   final int quantity;
   final String? locationName;
+  final double? latitude;
+  final double? longitude;
   final List<ProductImage> images;
   final SellerInfo? seller;
   final DateTime? createdAt;
@@ -91,6 +95,8 @@ class Product {
   bool get isAvailable =>
       status.toLowerCase() == 'available' && quantity > 0;
 
+  bool get hasMapLocation => latitude != null && longitude != null;
+
   factory Product.fromJson(Map<String, dynamic> json) {
     final sellerJson = json['seller'];
 
@@ -107,6 +113,8 @@ class Product {
       status: json['status']?.toString() ?? 'available',
       quantity: json['quantity'] as int? ?? 0,
       locationName: json['locationName'] as String? ?? json['location_name'] as String?,
+      latitude: _parseDouble(json['latitude']),
+      longitude: _parseDouble(json['longitude']),
       images: _parseImages(json),
       seller: sellerJson is Map<String, dynamic>
           ? SellerInfo.fromJson(sellerJson)
@@ -163,6 +171,18 @@ class Product {
     }
 
     return double.tryParse(value.toString()) ?? 0;
+  }
+
+  static double? _parseDouble(Object? value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    return double.tryParse(value.toString());
   }
 
   static DateTime? _parseDateTime(Object? value) {

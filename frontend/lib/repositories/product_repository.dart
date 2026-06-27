@@ -68,6 +68,8 @@ class ProductRepository {
     required String condition,
     required int quantity,
     String? locationName,
+    double? latitude,
+    double? longitude,
     List<String>? imageUrls,
   }) async {
     final response = await _productApiService.createProduct(
@@ -81,6 +83,10 @@ class ProductRepository {
         'quantity': quantity,
         if (locationName != null && locationName.trim().isNotEmpty)
           'locationName': locationName.trim(),
+        if (latitude != null && longitude != null) ...{
+          'latitude': latitude,
+          'longitude': longitude,
+        },
         if (imageUrls != null && imageUrls.isNotEmpty) 'imageUrls': imageUrls,
       },
     );

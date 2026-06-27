@@ -40,6 +40,10 @@ String formatProductStatus(String status) {
   }
 }
 
+bool productConditionMatchesFilter(String productCondition, String filterCondition) {
+  return productCondition.toUpperCase() == filterCondition.toUpperCase();
+}
+
 bool productStatusMatchesFilter(String productStatus, String filterStatus) {
   final product = productStatus.toLowerCase();
   final filter = filterStatus.toLowerCase();

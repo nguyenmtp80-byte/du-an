@@ -28,12 +28,14 @@ CREATE TABLE products (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     price INT,
-    image_urls VARCHAR(255)[], -- Mảng danh sách link hình ảnh đặc trưng của Postgres
+    image_urls TEXT[], -- Link ảnh (URL). Dùng TEXT[] thay VARCHAR(255)[] để chứa URL dài
     category VARCHAR(100),
     condition VARCHAR(50), -- NEW, LIKE_NEW, USED (khớp enum BE)
     quantity INT NOT NULL DEFAULT 1, -- Số lượng tồn kho
     status VARCHAR(50) DEFAULT 'available', -- available, sold
     location_name VARCHAR(255),
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
  
@@ -182,4 +184,45 @@ ON CONFLICT (id) DO NOTHING;
 select * from order_items
 select * from products
 select * from users
+
+-- ============================================================
+-- MIGRATION: Sửa cột image_urls nếu DB cũ dùng VARCHAR(255)[]
+-- (Lỗi: value too long for type character varying(255) khi insert URL/base64)
+-- ============================================================
+ALTER TABLE products
+  ALTER COLUMN image_urls TYPE TEXT[]
+  USING image_urls::TEXT[];
+
+-- ============================================================
+-- MIGRATION: Thêm tọa độ bản đồ cho products (map feature)
+-- ============================================================
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+
+CREATE INDEX IF NOT EXISTS idx_products_location
+  ON products (latitude, longitude)
+  WHERE latitude IS NOT NULL AND longitude IS NOT NULL;
+
+-- Cập nhật tọa độ mẫu Thủ Đức, TP.HCM cho seed cũ (prod-1 → prod-20)
+UPDATE products SET latitude = 10.8412, longitude = 106.8094 WHERE id = 'prod-1';  -- Sảnh tòa Alpha (FPT)
+UPDATE products SET latitude = 10.8420, longitude = 106.8078 WHERE id = 'prod-2';  -- Thư viện Delta
+UPDATE products SET latitude = 10.8405, longitude = 106.8102 WHERE id = 'prod-3';  -- Sảnh Beta
+UPDATE products SET latitude = 10.8398, longitude = 106.8086 WHERE id = 'prod-4';  -- KTX A
+UPDATE products SET latitude = 10.8431, longitude = 106.8065 WHERE id = 'prod-5';  -- Lab CNTT
+UPDATE products SET latitude = 10.8418, longitude = 106.8072 WHERE id = 'prod-6';  -- Thư viện chính
+UPDATE products SET latitude = 10.8420, longitude = 106.8078 WHERE id = 'prod-7';  -- Thư viện Delta
+UPDATE products SET latitude = 10.8412, longitude = 106.8094 WHERE id = 'prod-8';  -- Sảnh Alpha
+UPDATE products SET latitude = 10.8392, longitude = 106.8090 WHERE id = 'prod-9';  -- KTX B
+UPDATE products SET latitude = 10.8418, longitude = 106.8072 WHERE id = 'prod-10'; -- Thư viện chính
+UPDATE products SET latitude = 10.8398, longitude = 106.8086 WHERE id = 'prod-11'; -- KTX A
+UPDATE products SET latitude = 10.8408, longitude = 106.8059 WHERE id = 'prod-12'; -- Canteen
+UPDATE products SET latitude = 10.8392, longitude = 106.8090 WHERE id = 'prod-13'; -- KTX B
+UPDATE products SET latitude = 10.8386, longitude = 106.8082 WHERE id = 'prod-14'; -- KTX C
+UPDATE products SET latitude = 10.8398, longitude = 106.8086 WHERE id = 'prod-15'; -- KTX A
+UPDATE products SET latitude = 10.8410, longitude = 106.8098 WHERE id = 'prod-16'; -- Cổng trường
+UPDATE products SET latitude = 10.8700, longitude = 106.8030 WHERE id = 'prod-17'; -- Online (hub Thủ Đức)
+UPDATE products SET latitude = 10.8425, longitude = 106.8060 WHERE id = 'prod-18'; -- Gym campus
+UPDATE products SET latitude = 10.8438, longitude = 106.8088 WHERE id = 'prod-19'; -- Hội trường
+UPDATE products SET latitude = 10.8418, longitude = 106.8072 WHERE id = 'prod-20'; -- Thư viện
 

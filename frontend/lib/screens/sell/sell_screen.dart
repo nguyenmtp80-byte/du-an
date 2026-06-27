@@ -10,6 +10,7 @@ import '../../repositories/product_repository.dart';
 import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/validators.dart';
+import '../../widgets/location_map_sheet.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/screen_header.dart';
 
@@ -65,6 +66,8 @@ class _SellScreenState extends State<SellScreen> {
   bool _isUploading = false;
   final List<XFile> _pickedImages = [];
   final Map<String, Uint8List> _imageBytes = {};
+  double? _latitude;
+  double? _longitude;
 
   @override
   void initState() {
@@ -154,6 +157,28 @@ class _SellScreenState extends State<SellScreen> {
     });
   }
 
+  Future<void> _pickLocationOnMap() async {
+    final picked = await LocationMapSheet.pickLocation(
+      context,
+      initialLatitude: _latitude,
+      initialLongitude: _longitude,
+      locationLabel: _locationController.text.trim().isEmpty
+          ? null
+          : _locationController.text.trim(),
+    );
+
+    if (picked == null || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _latitude = picked.latitude;
+      _longitude = picked.longitude;
+    });
+
+    _showMessage('Đã chọn vị trí trên bản đồ.');
+  }
+
   Future<void> _handlePost() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -218,6 +243,8 @@ class _SellScreenState extends State<SellScreen> {
         condition: _selectedCondition!,
         quantity: _quantity,
         locationName: _locationController.text.trim(),
+        latitude: _latitude,
+        longitude: _longitude,
       );
 
       if (!mounted) {
@@ -378,11 +405,10 @@ class _SellScreenState extends State<SellScreen> {
                   const SizedBox(height: 24),
                   _FormCard(
                     children: [
-                      _SellTextField(
-                        label: 'Địa điểm giao dịch',
+                      _SellLocationField(
                         controller: _locationController,
-                        hintText: 'VD: Thư viện chính',
-                        prefixIcon: Icons.location_on_outlined,
+                        hasPinnedLocation: _latitude != null && _longitude != null,
+                        onOpenMap: _pickLocationOnMap,
                       ),
                       const SizedBox(height: 16),
                       _SellTextField(
@@ -580,6 +606,103 @@ class _PickedImageTile extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _SellLocationField extends StatelessWidget {
+  const _SellLocationField({
+    required this.controller,
+    required this.hasPinnedLocation,
+    required this.onOpenMap,
+  });
+
+  final TextEditingController controller;
+  final bool hasPinnedLocation;
+  final VoidCallback onOpenMap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionLabel('Địa điểm giao dịch'),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: controller,
+                style: const TextStyle(fontSize: 14, color: AppColors.gray900),
+                decoration: InputDecoration(
+                  hintText: 'VD: Thư viện chính',
+                  hintStyle:
+                      const TextStyle(color: AppColors.gray400, fontSize: 14),
+                  filled: true,
+                  fillColor: AppColors.gray50,
+                  prefixIcon: const Icon(
+                    Icons.location_on_outlined,
+                    color: AppColors.gray400,
+                    size: 18,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFF3F4F6)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AppColors.primary.withValues(alpha: 0.5),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Material(
+              color: hasPinnedLocation ? AppColors.primaryLight : AppColors.gray50,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: onOpenMap,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: hasPinnedLocation
+                          ? AppColors.primary
+                          : const Color(0xFFF3F4F6),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.map_outlined,
+                    color: hasPinnedLocation
+                        ? AppColors.primary
+                        : AppColors.gray500,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (hasPinnedLocation)
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Text(
+              'Đã ghim vị trí trên bản đồ',
+              style: TextStyle(fontSize: 12, color: AppColors.primary),
+            ),
+          ),
       ],
     );
   }

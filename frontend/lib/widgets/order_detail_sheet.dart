@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../models/order.dart';
+import '../models/product.dart';
+import '../repositories/product_repository.dart';
 import '../services/api_client.dart';
 import '../services/order_api_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
+import '../utils/product_location_utils.dart';
+import 'location_map_sheet.dart';
 
 String orderDisplayTitle(Order order) {
   if (order.items.isEmpty) {
@@ -25,13 +29,13 @@ String formatOrderStatusLabel(String status) {
     case 'APPROVED':
       return 'Đã xác nhận';
     case 'COMPLETED':
-      return 'Hoàn thành';
+      return 'Đã hoàn tất';
     case 'CONFIRMED':
       return 'Đã xác nhận';
     case 'SHIPPED':
       return 'Đang giao';
     case 'DELIVERED':
-      return 'Đã giao';
+      return 'Đã hoàn tất';
     case 'CANCELLED':
       return 'Đã hủy';
     default:
@@ -98,11 +102,63 @@ class _OrderDetailSheet extends StatefulWidget {
 class _OrderDetailSheetState extends State<_OrderDetailSheet> {
   late Order _order;
   bool _isSubmitting = false;
+  bool _isLoadingProducts = false;
+  List<Product> _orderProducts = [];
+  final _productRepository = ProductRepository();
 
   @override
   void initState() {
     super.initState();
     _order = widget.order;
+    _loadOrderProducts();
+  }
+
+  Future<void> _loadOrderProducts() async {
+    if (_order.items.isEmpty) {
+      return;
+    }
+
+    setState(() => _isLoadingProducts = true);
+
+    final products = <Product>[];
+    for (final item in _order.items) {
+      if (item.productId.isEmpty) {
+        continue;
+      }
+
+      try {
+        products.add(await _productRepository.fetchProductDetail(item.productId));
+      } on ApiException {
+        // Bỏ qua sản phẩm không tải được.
+      } catch (_) {
+        // Bỏ qua sản phẩm không tải được.
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _orderProducts = products;
+      _isLoadingProducts = false;
+    });
+  }
+
+  void _openProductMap(Product product) {
+    if (!product.hasMapLocation) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sản phẩm chưa có tọa độ trên bản đồ.')),
+      );
+      return;
+    }
+
+    LocationMapSheet.viewLocation(
+      context,
+      latitude: product.latitude!,
+      longitude: product.longitude!,
+      locationLabel: product.locationName,
+    );
   }
 
   bool get _canAccept =>
@@ -329,6 +385,41 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
                       label: 'Ngày đặt',
                       value: formatRelativeDate(_order.createdAt),
                     ),
+                  if (_orderProducts.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _DetailRow(
+                      label: 'Địa điểm',
+                      value: _isLoadingProducts
+                          ? 'Đang tải...'
+                          : summarizeProductLocations(_orderProducts),
+                    ),
+                    ...uniqueProductsWithMap(_orderProducts).map(
+                      (product) => Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                product.locationName ?? product.name,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.gray700,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => _openProductMap(product),
+                              icon: const Icon(
+                                Icons.map_outlined,
+                                color: AppColors.primary,
+                              ),
+                              tooltip: 'Xem bản đồ',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   const Text(
                     'Sản phẩm',
