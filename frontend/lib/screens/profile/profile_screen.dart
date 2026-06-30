@@ -8,6 +8,7 @@ import '../../services/api_client.dart';
 import '../../services/order_api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../repositories/product_repository.dart';
+import 'help_center_screen.dart';
 import 'my_listings_screen.dart';
 import 'my_orders_screen.dart';
 import 'sold_orders_screen.dart';
@@ -120,6 +121,12 @@ class ProfileScreenState extends State<ProfileScreen> {
     ).then((_) => loadOrderStats());
   }
 
+  void _openHelpCenter(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const HelpCenterScreen()),
+    );
+  }
+
   Future<void> _confirmLogout(BuildContext context) async {
     final auth = context.read<AuthProvider>();
     if (auth.isLoading) {
@@ -217,7 +224,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                   _ProfileMenuItem(
                     icon: Icons.help_outline,
                     label: 'Trung tâm trợ giúp',
-                    onTap: () {},
+                    onTap: () => _openHelpCenter(context),
                   ),
                   const SizedBox(height: 12),
                   _ProfileMenuItem(
