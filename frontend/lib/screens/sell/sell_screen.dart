@@ -7,6 +7,9 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../repositories/product_repository.dart';
+import 'package:http/http.dart' as http;
+
+import '../../config/api_config.dart';
 import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/validators.dart';
@@ -179,6 +182,36 @@ class _SellScreenState extends State<SellScreen> {
     _showMessage('Đã chọn vị trí trên bản đồ.');
   }
 
+  /// Upload ảnh đã chọn lên server, trả về danh sách URL
+  Future<List<String>> _uploadImages() async {
+    if (_pickedImages.isEmpty) return [];
+
+    final apiClient = ApiClient();
+    final multipartFiles = <http.MultipartFile>[];
+
+    for (final image in _pickedImages) {
+      final bytes = await image.readAsBytes();
+      final multipartFile = http.MultipartFile.fromBytes(
+        'files',
+        bytes,
+        filename: image.name,
+      );
+      multipartFiles.add(multipartFile);
+    }
+
+    final response = await apiClient.uploadMultipart(
+      ApiConfig.uploadImagesEndpoint,
+      files: multipartFiles,
+    );
+
+    final urls = response['urls'];
+    if (urls is List) {
+      return urls.map((url) => url.toString()).toList();
+    }
+
+    return [];
+  }
+
   Future<void> _handlePost() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -203,37 +236,17 @@ class _SellScreenState extends State<SellScreen> {
       return;
     }
 
-    if (_pickedImages.isNotEmpty) {
-      final shouldContinue = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Chưa upload được ảnh'),
-          content: const Text(
-            'Backend chưa có API upload ảnh.\n\n'
-            'Sản phẩm sẽ được đăng không kèm hình ảnh. '
-            'Bạn có muốn tiếp tục không?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Huỷ'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Đăng không ảnh'),
-            ),
-          ],
-        ),
-      );
-
-      if (shouldContinue != true || !mounted) {
-        return;
-      }
-    }
-
     setState(() => _isUploading = true);
 
     try {
+      // Bước 1: Upload ảnh lên server (nếu có)
+      List<String> uploadedUrls = [];
+      if (_pickedImages.isNotEmpty) {
+        uploadedUrls = await _uploadImages();
+        if (!mounted) return;
+      }
+
+      // Bước 2: Tạo sản phẩm với danh sách URL ảnh
       await _productRepository.createProduct(
         userId: userId,
         title: _nameController.text.trim(),
@@ -245,6 +258,7 @@ class _SellScreenState extends State<SellScreen> {
         locationName: _locationController.text.trim(),
         latitude: _latitude,
         longitude: _longitude,
+        imageUrls: uploadedUrls.isNotEmpty ? uploadedUrls : null,
       );
 
       if (!mounted) {
@@ -303,7 +317,7 @@ class _SellScreenState extends State<SellScreen> {
                   const _SectionLabel('Hình ảnh'),
                   const SizedBox(height: 4),
                   const Text(
-                    'Xem trước trên máy. Upload ảnh lên server cần BE có API upload.',
+                    'Chọn ảnh sản phẩm (tối đa 4 ảnh, mỗi ảnh tối đa 2MB).',
                     style: TextStyle(fontSize: 12, color: AppColors.gray500, height: 1.4),
                   ),
                   const SizedBox(height: 12),

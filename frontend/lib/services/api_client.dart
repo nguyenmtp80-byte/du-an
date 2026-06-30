@@ -97,6 +97,42 @@ class ApiClient {
     }
   }
 
+  /// Upload file (multipart) và trả về response JSON
+  Future<Map<String, dynamic>> uploadMultipart(
+    String endpoint, {
+    required List<http.MultipartFile> files,
+    String? token,
+    Map<String, String>? extraHeaders,
+  }) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+
+    try {
+      final request = http.MultipartRequest('POST', uri);
+      request.files.addAll(files);
+
+      final headers = <String, String>{
+        'Accept': 'application/json',
+      };
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+      if (extraHeaders != null) {
+        headers.addAll(extraHeaders);
+      }
+      request.headers.addAll(headers);
+
+      final streamedResponse =
+          await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamedResponse);
+
+      return _handleResponse(response);
+    } on ApiException {
+      rethrow;
+    } catch (error) {
+      throw ApiException(_connectionErrorMessage(error));
+    }
+  }
+
   Future<Map<String, dynamic>> put(
     String endpoint, {
     Map<String, dynamic>? body,
