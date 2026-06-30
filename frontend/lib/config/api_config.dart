@@ -27,6 +27,19 @@ class ApiConfig {
   static const String logoutEndpoint = '/auth/logout';
 
   static const String productsEndpoint = '/products';
+  static const String uploadImagesEndpoint = '/upload/images';
+  static String get baseUploadUrl {
+    if (kIsWeb) {
+      return 'http://localhost:8080';
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'http://10.0.2.2:8080';
+      default:
+        return 'http://localhost:8080';
+    }
+  }
   static String productDetailEndpoint(String productId) => '/products/$productId';
   static const String cartAddEndpoint = '/cart/add';
   static const String cartEndpoint = '/cart';
