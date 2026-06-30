@@ -1,3 +1,5 @@
+import '../config/api_config.dart';
+
 class ProductImage {
   const ProductImage({
     required this.id,
@@ -12,9 +14,17 @@ class ProductImage {
   factory ProductImage.fromJson(Map<String, dynamic> json) {
     return ProductImage(
       id: json['id']?.toString() ?? '',
-      imageUrl: json['imageUrl'] as String? ?? json['image_url'] as String? ?? '',
+      imageUrl: _resolveUrl(json['imageUrl'] as String? ?? json['image_url'] as String? ?? ''),
       displayOrder: json['displayOrder'] as int? ?? json['display_order'] as int?,
     );
+  }
+
+  /// Resolve relative paths (e.g. /uploads/...) to full backend URL
+  static String _resolveUrl(String url) {
+    if (url.startsWith('/')) {
+      return '${ApiConfig.baseUploadUrl}$url';
+    }
+    return url;
   }
 }
 
@@ -129,7 +139,7 @@ class Product {
       return imageUrls.asMap().entries.map((entry) {
         return ProductImage(
           id: 'img-${entry.key}',
-          imageUrl: entry.value.toString(),
+          imageUrl: ProductImage._resolveUrl(entry.value.toString()),
           displayOrder: entry.key + 1,
         );
       }).toList();
