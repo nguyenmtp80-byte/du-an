@@ -48,7 +48,24 @@ public class UploadController {
             for (MultipartFile file : files) {
                 // Validate file type
                 String contentType = file.getContentType();
-                if (contentType == null || !contentType.startsWith("image/")) {
+                String originalName = file.getOriginalFilename();
+                boolean isValidImage = false;
+
+                if (contentType != null && contentType.startsWith("image/")) {
+                    isValidImage = true;
+                } else if (contentType != null && contentType.equals("application/octet-stream")) {
+                    // Dart http package sends octet-stream for multipart files
+                    // Fall back to extension check
+                    isValidImage = originalName != null &&
+                            (originalName.toLowerCase().endsWith(".jpg") ||
+                             originalName.toLowerCase().endsWith(".jpeg") ||
+                             originalName.toLowerCase().endsWith(".png") ||
+                             originalName.toLowerCase().endsWith(".gif") ||
+                             originalName.toLowerCase().endsWith(".webp") ||
+                             originalName.toLowerCase().endsWith(".bmp"));
+                }
+
+                if (!isValidImage) {
                     continue;
                 }
 
@@ -58,7 +75,6 @@ public class UploadController {
                 }
 
                 // Tạo tên file duy nhất
-                String originalName = file.getOriginalFilename();
                 String extension = "";
                 if (originalName != null && originalName.contains(".")) {
                     extension = originalName.substring(originalName.lastIndexOf("."));
