@@ -68,7 +68,7 @@ public class OrderService {
             }
         }
 
-        // Validate payment method
+        // Validate payment method (CASH, BANK_TRANSFER, BANK_TRANSFER_QR)
         PaymentMethod paymentMethod = validatePaymentMethod(request.getPaymentMethod());
 
         // Validate delivery info
