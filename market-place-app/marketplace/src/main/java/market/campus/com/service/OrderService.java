@@ -115,16 +115,31 @@ public class OrderService {
         // Xóa giỏ hàng
         cartService.clearCart(buyer);
 
-        // Thông báo cho seller có đơn hàng mới cần xác nhận
+        // Thông báo cho seller theo phương thức thanh toán
+        String sellerNotificationBody = buildNewOrderNotificationBody(orderId, paymentMethod);
         notificationService.createNotification(
                 seller,
                 "Đơn hàng mới",
-                "Bạn có đơn hàng mới " + orderId + " cần xác nhận.",
+                sellerNotificationBody,
                 "order_status",
                 orderId
         );
 
         return getOrderResponse(order);
+    }
+
+    private String buildNewOrderNotificationBody(String orderId, PaymentMethod paymentMethod) {
+        switch (paymentMethod) {
+            case BANK_TRANSFER_QR:
+                return "Bạn có đơn hàng mới " + orderId
+                        + " đang chờ người mua thanh toán QR.";
+            case CASH:
+                return "Bạn có đơn hàng mới " + orderId + " cần xác nhận.";
+            case BANK_TRANSFER:
+                return "Bạn có đơn hàng mới " + orderId + " cần xác nhận.";
+            default:
+                return "Bạn có đơn hàng mới " + orderId + ".";
+        }
     }
 
     // Validate payment method
@@ -223,17 +238,8 @@ public class OrderService {
             );
         }
 
-        // Restore product stock from order items
-        List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
-        for (OrderItem item : orderItems) {
-            Product product = item.getProduct();
-            int restoredQuantity = (product.getQuantity() != null ? product.getQuantity() : 0) + item.getQuantity();
-            product.setQuantity(restoredQuantity);
-            if (product.getStatus() == ProductStatus.sold && restoredQuantity > 0) {
-                product.setStatus(ProductStatus.available);
-            }
-            productRepository.save(product);
-        }
+        // Hoàn trả tồn kho sản phẩm
+        restoreProductStockForOrder(orderId);
 
         // Update order status
         order.setStatus(OrderStatus.CANCELLED);
@@ -243,12 +249,44 @@ public class OrderService {
         notificationService.createNotification(
                 order.getSeller(),
                 "Đơn hàng đã bị hủy",
-                "Đơn hàng " + orderId + " đã bị người mua hủy.",
+                "Đơn hàng " + orderId + " đã bị người mua hủy. Số lượng sản phẩm đã được hoàn lại.",
                 "order_status",
                 orderId
         );
 
         return getOrderResponse(order);
+    }
+
+    /**
+     * Hoàn trả tồn kho khi đơn hàng bị huỷ (PENDING → CANCELLED).
+     */
+    @Transactional
+    public void restoreProductStockForOrder(String orderId) {
+        List<OrderItem> orderItems = orderItemRepository.findByOrder_Id(orderId);
+
+        for (OrderItem item : orderItems) {
+            if (item.getProduct() == null || item.getProduct().getId() == null) {
+                continue;
+            }
+
+            Product product = productRepository.findById(item.getProduct().getId())
+                    .orElse(null);
+            if (product == null) {
+                continue;
+            }
+
+            int restoreQty = item.getQuantity() != null ? item.getQuantity() : 0;
+            if (restoreQty <= 0) {
+                continue;
+            }
+
+            int currentQty = product.getQuantity() != null ? product.getQuantity() : 0;
+            product.setQuantity(currentQty + restoreQty);
+            if (product.getStatus() == ProductStatus.sold && product.getQuantity() > 0) {
+                product.setStatus(ProductStatus.available);
+            }
+            productRepository.save(product);
+        }
     }
 
     /**

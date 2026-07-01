@@ -25,6 +25,9 @@ public class PaymentService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private OrderService orderService;
+
     // ==================== QR PAYMENT ====================
 
     /**
@@ -77,13 +80,13 @@ public class PaymentService {
         notificationService.createNotification(
                 order.getSeller(),
                 "Thanh toán QR thành công",
-                "Đơn hàng " + orderId + " đã được thanh toán qua QR. Vui lòng chuẩn bị hàng.",
+                "Đơn hàng " + orderId + " đã được thanh toán QR. Vui lòng chuẩn bị và giao hàng.",
                 "order_status", orderId
         );
         notificationService.createNotification(
                 order.getBuyer(),
-                "Xác nhận thanh toán QR",
-                "Đơn hàng " + orderId + " đã thanh toán QR thành công.",
+                "Thanh toán QR thành công",
+                "Đơn hàng " + orderId + " đã thanh toán QR và được xác nhận. Người bán sẽ chuẩn bị hàng.",
                 "order_status", orderId
         );
 
@@ -100,13 +103,14 @@ public class PaymentService {
         validatePaymentMethod(order, PaymentMethod.BANK_TRANSFER_QR);
         validateOrderStatus(order, OrderStatus.PENDING);
 
+        orderService.restoreProductStockForOrder(orderId);
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
 
         notificationService.createNotification(
                 order.getSeller(),
                 "Thanh toán QR đã hủy",
-                "Đơn hàng " + orderId + " đã bị hủy thanh toán QR.",
+                "Đơn hàng " + orderId + " đã bị hủy. Số lượng sản phẩm đã được hoàn lại.",
                 "order_status", orderId
         );
 
@@ -165,13 +169,14 @@ public class PaymentService {
         validatePaymentMethod(order, PaymentMethod.CASH);
         validateOrderStatus(order, OrderStatus.PENDING);
 
+        orderService.restoreProductStockForOrder(orderId);
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
 
         notificationService.createNotification(
                 order.getSeller(),
                 "Đơn hàng tiền mặt đã hủy",
-                "Đơn hàng " + orderId + " (tiền mặt) đã bị người mua hủy.",
+                "Đơn hàng " + orderId + " (tiền mặt) đã bị người mua hủy. Số lượng sản phẩm đã được hoàn lại.",
                 "order_status", orderId
         );
 
@@ -205,8 +210,8 @@ public class PaymentService {
                         + "Sau khi chuyển khoản, gửi ảnh biên lai cho người bán qua chat.";
                 break;
             case BANK_TRANSFER_QR:
-                instructions = "Quét mã QR bên dưới bằng app ngân hàng để thanh toán. "
-                        + "Sau khi thanh toán, nhấn 'Xác nhận thanh toán' để hoàn tất.";
+                instructions = "Quét mã QR bằng app ngân hàng/VNPay để thanh toán. "
+                        + "Sau khi chuyển tiền thành công, nhấn 'Tôi đã thanh toán' để xác nhận đơn.";
                 break;
             default:
                 instructions = "";

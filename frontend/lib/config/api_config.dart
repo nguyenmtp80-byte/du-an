@@ -49,6 +49,12 @@ class ApiConfig {
   static const String ordersEndpoint = '/orders';
   static const String sellerOrdersEndpoint = '/orders/seller/list';
   static String orderDetailEndpoint(String orderId) => '/orders/$orderId';
+  static String paymentInfoEndpoint(String orderId) => '/payments/$orderId/info';
+  static String paymentQrEndpoint(String orderId) => '/payments/$orderId/qr';
+  static String paymentQrConfirmEndpoint(String orderId) =>
+      '/payments/$orderId/qr/confirm';
+  static String paymentQrCancelEndpoint(String orderId) =>
+      '/payments/$orderId/qr/cancel';
   static String orderAcceptEndpoint(String orderId) => '/orders/$orderId/accept';
   static String orderCancelEndpoint(String orderId) => '/orders/$orderId/cancel';
   static String orderCompleteEndpoint(String orderId) => '/orders/$orderId/complete';

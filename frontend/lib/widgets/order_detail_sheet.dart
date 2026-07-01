@@ -49,6 +49,8 @@ String formatPaymentMethodLabel(String method) {
       return 'Tiền mặt';
     case 'BANK_TRANSFER':
       return 'Chuyển khoản';
+    case 'BANK_TRANSFER_QR':
+      return 'Quét mã QR VNPay';
     default:
       return method;
   }
