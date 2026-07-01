@@ -4,6 +4,7 @@ import market.campus.com.dto.response.OrderResponse;
 import market.campus.com.dto.response.PaymentQrResponse;
 import market.campus.com.model.User;
 import market.campus.com.service.PaymentService;
+import market.campus.com.service.PaymentService.PaymentInfoResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,9 +37,30 @@ public class PaymentController {
         public void setData(Object data) { this.data = data; }
     }
 
+    // ==================== THÔNG TIN THANH TOÁN ====================
+
+    /**
+     * GET /api/payments/{orderId}/info
+     * Lấy thông tin thanh toán + hướng dẫn theo phương thức
+     */
+    @GetMapping("/{orderId}/info")
+    public ResponseEntity<?> getPaymentInfo(@RequestHeader("X-User-Id") String userId,
+                                             @PathVariable String orderId) {
+        try {
+            User user = new User();
+            user.setId(userId);
+            PaymentInfoResponse info = paymentService.getPaymentInfo(orderId, user);
+            return ResponseEntity.ok(info);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    // ==================== QR PAYMENT ====================
+
     /**
      * GET /api/payments/{orderId}/qr
-     * Tạo QR thanh toán cho đơn hàng (chỉ áp dụng BANK_TRANSFER_QR)
+     * Tạo QR thanh toán (chỉ BANK_TRANSFER_QR)
      */
     @GetMapping("/{orderId}/qr")
     public ResponseEntity<?> getPaymentQr(@RequestHeader("X-User-Id") String userId,
@@ -54,35 +76,73 @@ public class PaymentController {
     }
 
     /**
-     * PUT /api/payments/{orderId}/confirm
-     * Sandbox: Xác nhận đã thanh toán thành công
-     * (Trong thực tế, webhook từ ngân hàng sẽ gọi)
+     * PUT /api/payments/{orderId}/qr/confirm
+     * Xác nhận đã thanh toán QR (sandbox) — PENDING → APPROVED
      */
-    @PutMapping("/{orderId}/confirm")
-    public ResponseEntity<?> confirmPayment(@RequestHeader("X-User-Id") String userId,
-                                             @PathVariable String orderId) {
+    @PutMapping("/{orderId}/qr/confirm")
+    public ResponseEntity<?> confirmQrPayment(@RequestHeader("X-User-Id") String userId,
+                                               @PathVariable String orderId) {
         try {
             User user = new User();
             user.setId(userId);
-            OrderResponse response = paymentService.confirmPayment(orderId, user);
-            return ResponseEntity.ok(new SuccessResponse("Xác nhận thanh toán thành công", response));
+            OrderResponse response = paymentService.confirmQrPayment(orderId, user);
+            return ResponseEntity.ok(new SuccessResponse("Xác nhận thanh toán QR thành công", response));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
     }
 
     /**
-     * PUT /api/payments/{orderId}/cancel
-     * Sandbox: Hủy thanh toán
+     * PUT /api/payments/{orderId}/qr/cancel
+     * Hủy thanh toán QR — PENDING → CANCELLED
      */
-    @PutMapping("/{orderId}/cancel")
-    public ResponseEntity<?> cancelPayment(@RequestHeader("X-User-Id") String userId,
-                                            @PathVariable String orderId) {
+    @PutMapping("/{orderId}/qr/cancel")
+    public ResponseEntity<?> cancelQrPayment(@RequestHeader("X-User-Id") String userId,
+                                              @PathVariable String orderId) {
         try {
             User user = new User();
             user.setId(userId);
-            OrderResponse response = paymentService.cancelPayment(orderId, user);
-            return ResponseEntity.ok(new SuccessResponse("Hủy thanh toán thành công", response));
+            OrderResponse response = paymentService.cancelQrPayment(orderId, user);
+            return ResponseEntity.ok(new SuccessResponse("Hủy thanh toán QR thành công", response));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    // ==================== CASH PAYMENT ====================
+
+    /**
+     * PUT /api/payments/{orderId}/cash/confirm
+     * Xác nhận đã thanh toán tiền mặt (khi nhận hàng)
+     * APPROVED → COMPLETED
+     * Cả buyer và seller đều có thể gọi
+     */
+    @PutMapping("/{orderId}/cash/confirm")
+    public ResponseEntity<?> confirmCashPayment(@RequestHeader("X-User-Id") String userId,
+                                                 @PathVariable String orderId) {
+        try {
+            User user = new User();
+            user.setId(userId);
+            OrderResponse response = paymentService.confirmCashPayment(orderId, user);
+            return ResponseEntity.ok(new SuccessResponse("Xác nhận thanh toán tiền mặt thành công", response));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * PUT /api/payments/{orderId}/cash/cancel
+     * Hủy đơn hàng tiền mặt khi chưa xác nhận
+     * PENDING → CANCELLED
+     */
+    @PutMapping("/{orderId}/cash/cancel")
+    public ResponseEntity<?> cancelCashOrder(@RequestHeader("X-User-Id") String userId,
+                                              @PathVariable String orderId) {
+        try {
+            User user = new User();
+            user.setId(userId);
+            OrderResponse response = paymentService.cancelCashOrder(orderId, user);
+            return ResponseEntity.ok(new SuccessResponse("Hủy đơn hàng tiền mặt thành công", response));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
