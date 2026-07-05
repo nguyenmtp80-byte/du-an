@@ -101,7 +101,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
       try {
         cache[productId] = await _productRepository.fetchProductDetail(productId);
       } on ApiException {
-        // Bỏ qua sản phẩm không tải được.
+        continue;
       } catch (_) {}
     }
 

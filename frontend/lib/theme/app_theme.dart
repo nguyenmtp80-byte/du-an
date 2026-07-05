@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  /// Cam chủ đạo — khớp mockup Campus Marketplace
   static const Color primary = Color(0xFFF97316);
   static const Color primaryDark = Color(0xFFEA580C);
   static const Color primaryLight = Color(0xFFFFF7ED);

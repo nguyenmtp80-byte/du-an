@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_routes.dart';
+import '../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/notification_provider.dart';
@@ -9,7 +11,6 @@ import '../cart/cart_screen.dart';
 import '../chat/chat_history_screen.dart';
 import '../home/home_screen.dart';
 import '../profile/profile_screen.dart';
-import '../sell/sell_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -76,9 +77,7 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _openSellScreen() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const SellScreen()),
-    );
+    Navigator.of(context).pushNamed(AppRoutes.sell);
   }
 
   @override
@@ -163,14 +162,14 @@ class _AppBottomNavBar extends StatelessWidget {
               _NavItem(
                 icon: Icons.home_outlined,
                 activeIcon: Icons.home,
-                label: 'Trang chủ',
+                label: AppStrings.navHome,
                 isActive: currentIndex == 0,
                 onTap: () => onTabSelected(0),
               ),
               _NavItem(
                 icon: Icons.shopping_cart_outlined,
                 activeIcon: Icons.shopping_cart,
-                label: 'Giỏ hàng',
+                label: AppStrings.navCart,
                 isActive: currentIndex == 1,
                 badgeCount: cartBadgeCount,
                 onTap: () => onTabSelected(1),
@@ -179,7 +178,7 @@ class _AppBottomNavBar extends StatelessWidget {
               _NavItem(
                 icon: Icons.chat_bubble_outline,
                 activeIcon: Icons.chat_bubble,
-                label: 'Tin nhắn',
+                label: AppStrings.navChat,
                 isActive: currentIndex == 2,
                 badgeCount: chatBadgeCount,
                 onTap: () => onTabSelected(2),
@@ -187,7 +186,7 @@ class _AppBottomNavBar extends StatelessWidget {
               _NavItem(
                 icon: Icons.person_outline,
                 activeIcon: Icons.person,
-                label: 'Cá nhân',
+                label: AppStrings.navProfile,
                 isActive: currentIndex == 3,
                 onTap: () => onTabSelected(3),
               ),

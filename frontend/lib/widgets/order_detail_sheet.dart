@@ -131,9 +131,9 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
       try {
         products.add(await _productRepository.fetchProductDetail(item.productId));
       } on ApiException {
-        // Bỏ qua sản phẩm không tải được.
+        continue;
       } catch (_) {
-        // Bỏ qua sản phẩm không tải được.
+        continue;
       }
     }
 

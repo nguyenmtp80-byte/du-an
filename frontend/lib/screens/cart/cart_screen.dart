@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_routes.dart';
 import '../../models/cart_item.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/screen_header.dart';
-import '../checkout/checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({
@@ -40,9 +40,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _openCheckout() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const CheckoutScreen()),
-    );
+    Navigator.of(context).pushNamed(AppRoutes.checkout);
   }
 
   void _goShopping() {

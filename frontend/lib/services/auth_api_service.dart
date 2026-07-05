@@ -2,7 +2,6 @@ import '../config/api_config.dart';
 import '../models/auth_response.dart';
 import 'api_client.dart';
 
-/// Gọi trực tiếp các endpoint auth của Spring Boot.
 class AuthApiService {
   AuthApiService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'core/constants/app_strings.dart';
+import 'core/routes/app_router.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/notification_provider.dart';
@@ -25,10 +27,11 @@ class StudentMarketplaceApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
-        title: 'Student Marketplace',
+        title: AppStrings.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         home: const AuthGate(),
+        onGenerateRoute: AppRouter.onGenerateRoute,
       ),
     );
   }

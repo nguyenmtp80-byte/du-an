@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/cart_item.dart';
 import '../../models/order.dart';
 import '../../models/product.dart';
+import '../../core/constants/app_routes.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/api_client.dart';
@@ -13,7 +14,6 @@ import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
 import '../../utils/product_location_utils.dart';
 import '../../utils/validators.dart';
-import 'payment_qr_screen.dart';
 import '../../widgets/auth_text_field.dart';
 import '../../widgets/location_map_sheet.dart';
 import '../../widgets/order_detail_sheet.dart';
@@ -78,9 +78,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       try {
         products.add(await _productRepository.fetchProductDetail(item.productId));
       } on ApiException {
-        // Bỏ qua sản phẩm không tải được.
+        continue;
       } catch (_) {
-        // Bỏ qua sản phẩm không tải được.
+        continue;
       }
     }
 
@@ -216,13 +216,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       if (_paymentMethod == 'BANK_TRANSFER_QR') {
         setState(() => _isSubmitting = false);
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
-            builder: (_) => PaymentQrScreen(
-              orderId: orderDetail.id,
-              totalAmount: orderDetail.totalAmount,
-            ),
-          ),
+        Navigator.of(context).pushReplacementNamed(
+          AppRoutes.paymentQr,
+          arguments: {
+            AppRoutes.orderIdArg: orderDetail.id,
+            'totalAmount': orderDetail.totalAmount,
+          },
         );
         return;
       }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_routes.dart';
+import '../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/validators.dart';
@@ -9,7 +11,6 @@ import '../../widgets/auth_hero_header.dart';
 import '../../widgets/auth_text_field.dart';
 import '../../widgets/google_sign_in_button.dart';
 import '../../widgets/primary_button.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -80,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      'Chào mừng trở lại!',
+                      AppStrings.welcomeBack,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
@@ -90,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
                     AuthTextField(
                       controller: _emailController,
-                      hintText: 'Email sinh viên',
+                      hintText: AppStrings.emailHint,
                       prefixIcon: Icons.mail_outline,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
@@ -99,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                     AuthTextField(
                       controller: _passwordController,
-                      hintText: 'Mật khẩu',
+                      hintText: AppStrings.passwordHint,
                       prefixIcon: Icons.lock_outline,
                       obscureText: true,
                       textInputAction: TextInputAction.done,
@@ -123,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: const Text(
-                          'Quên mật khẩu?',
+                          AppStrings.forgotPassword,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -134,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     PrimaryButton(
-                      label: 'Đăng nhập',
+                      label: AppStrings.login,
                       isLoading: auth.isLoading,
                       onPressed: _handleSubmit,
                     ),
@@ -147,19 +148,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          'Chưa có tài khoản? ',
+                          AppStrings.noAccount,
                           style: TextStyle(fontSize: 14, color: AppColors.gray500),
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => const RegisterScreen(),
-                              ),
-                            );
+                            Navigator.of(context).pushNamed(AppRoutes.register);
                           },
                           child: const Text(
-                            'Tạo tài khoản mới',
+                            AppStrings.register,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,

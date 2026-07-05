@@ -6,7 +6,6 @@ import '../models/map_location.dart';
 import '../theme/app_theme.dart';
 import '../utils/map_constants.dart';
 
-/// Chọn hoặc xem vị trí trên bản đồ OpenStreetMap (Thủ Đức).
 class LocationMapSheet extends StatefulWidget {
   const LocationMapSheet({
     super.key,
@@ -278,7 +277,6 @@ class _LocationMapSheetState extends State<LocationMapSheet> {
   }
 }
 
-/// Nút mở bản đồ xem vị trí.
 class ViewLocationMapButton extends StatelessWidget {
   const ViewLocationMapButton({
     super.key,

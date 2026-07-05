@@ -94,9 +94,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           userId: userId,
           notificationId: notification.id,
         );
-      } catch (_) {
-        // Không chặn luồng nếu đánh dấu đọc thất bại.
-      }
+      } catch (_) {}
     }
 
     final orderId = notification.orderId;

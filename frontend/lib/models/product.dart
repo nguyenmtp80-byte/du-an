@@ -19,7 +19,6 @@ class ProductImage {
     );
   }
 
-  /// Resolve relative paths (e.g. /uploads/...) to full backend URL
   static String _resolveUrl(String url) {
     if (url.startsWith('/')) {
       return '${ApiConfig.baseUploadUrl}$url';

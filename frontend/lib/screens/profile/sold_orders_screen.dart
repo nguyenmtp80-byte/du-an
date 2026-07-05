@@ -12,7 +12,6 @@ import '../../widgets/order_detail_sheet.dart';
 import '../../widgets/order_list_card.dart';
 import '../../widgets/screen_header.dart';
 
-/// Danh sách đơn bán: chờ xác nhận, đã xác nhận, hoàn tất.
 class SoldOrdersScreen extends StatefulWidget {
   const SoldOrdersScreen({super.key});
 
@@ -102,7 +101,7 @@ class _SoldOrdersScreenState extends State<SoldOrdersScreen> {
       try {
         cache[productId] = await _productRepository.fetchProductDetail(productId);
       } on ApiException {
-        // Bỏ qua sản phẩm không tải được.
+        continue;
       } catch (_) {}
     }
 

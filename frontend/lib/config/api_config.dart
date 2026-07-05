@@ -1,7 +1,13 @@
 import 'package:flutter/foundation.dart';
 
-/// Cấu hình URL backend Spring Boot (`market-place-app`).
 class ApiConfig {
+  static const String _host = String.fromEnvironment(
+    'API_HOST',
+    defaultValue: '10.0.2.2',
+  );
+
+  static String get _apiOrigin => 'http://$_host:8080';
+
   static String get baseUrl {
     if (kIsWeb) {
       return 'http://localhost:8080/api';
@@ -9,13 +15,12 @@ class ApiConfig {
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return 'http://10.0.2.2:8080/api';
+        return '$_apiOrigin/api';
       default:
         return 'http://localhost:8080/api';
     }
   }
 
-  /// Gợi ý khi Flutter Web không gọi được API (CORS trình duyệt).
   static String get webConnectionHint =>
       'Chạy trên Windows: flutter run -d windows\n'
       'Hoặc Chrome dev: flutter run -d chrome '
@@ -35,11 +40,12 @@ class ApiConfig {
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return 'http://10.0.2.2:8080';
+        return _apiOrigin;
       default:
         return 'http://localhost:8080';
     }
   }
+
   static String productDetailEndpoint(String productId) => '/products/$productId';
   static const String cartAddEndpoint = '/cart/add';
   static const String cartEndpoint = '/cart';
@@ -69,6 +75,5 @@ class ApiConfig {
   static String notificationReadEndpoint(String notificationId) =>
       '/notifications/$notificationId/read';
 
-  /// ID sản phẩm mẫu trong `TEST_CASES.md` — dùng fallback khi BE chưa có GET /products.
   static const List<String> devProductIds = ['prod-1', 'prod-2', 'prod-3'];
 }

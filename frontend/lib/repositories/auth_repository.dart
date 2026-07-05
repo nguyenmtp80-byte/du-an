@@ -7,7 +7,6 @@ import '../models/auth_response.dart';
 import '../models/user.dart';
 import '../services/auth_api_service.dart';
 
-/// Repository auth: gọi API Spring Boot và lưu session cục bộ.
 class AuthRepository {
   AuthRepository({
     AuthApiService? authApiService,
@@ -74,9 +73,7 @@ class AuthRepository {
     if (token != null && token.isNotEmpty) {
       try {
         await _authApiService.logout(token: token);
-      } catch (_) {
-        // Vẫn xóa session local nếu server không phản hồi.
-      }
+      } catch (_) {}
     }
 
     await _clearSession();
@@ -111,7 +108,6 @@ class AuthRepository {
       return storedUser.id;
     }
 
-    // Backend ưu tiên tìm theo id, nếu không có sẽ fallback sang email.
     return email;
   }
 

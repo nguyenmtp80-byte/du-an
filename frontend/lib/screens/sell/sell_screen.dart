@@ -7,9 +7,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../repositories/product_repository.dart';
-import 'package:http/http.dart' as http;
-
-import '../../config/api_config.dart';
+import '../../core/constants/app_strings.dart';
 import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/validators.dart';
@@ -182,34 +180,17 @@ class _SellScreenState extends State<SellScreen> {
     _showMessage('Đã chọn vị trí trên bản đồ.');
   }
 
-  /// Upload ảnh đã chọn lên server, trả về danh sách URL
   Future<List<String>> _uploadImages() async {
-    if (_pickedImages.isEmpty) return [];
+    if (_pickedImages.isEmpty) {
+      return [];
+    }
 
-    final apiClient = ApiClient();
-    final multipartFiles = <http.MultipartFile>[];
-
+    final bytesList = <Uint8List>[];
     for (final image in _pickedImages) {
-      final bytes = await image.readAsBytes();
-      final multipartFile = http.MultipartFile.fromBytes(
-        'files',
-        bytes,
-        filename: image.name,
-      );
-      multipartFiles.add(multipartFile);
+      bytesList.add(await image.readAsBytes());
     }
 
-    final response = await apiClient.uploadMultipart(
-      ApiConfig.uploadImagesEndpoint,
-      files: multipartFiles,
-    );
-
-    final urls = response['urls'];
-    if (urls is List) {
-      return urls.map((url) => url.toString()).toList();
-    }
-
-    return [];
+    return _productRepository.uploadProductImages(bytesList);
   }
 
   Future<void> _handlePost() async {
@@ -239,14 +220,12 @@ class _SellScreenState extends State<SellScreen> {
     setState(() => _isUploading = true);
 
     try {
-      // Bước 1: Upload ảnh lên server (nếu có)
-      List<String> uploadedUrls = [];
+      var uploadedUrls = <String>[];
       if (_pickedImages.isNotEmpty) {
         uploadedUrls = await _uploadImages();
         if (!mounted) return;
       }
 
-      // Bước 2: Tạo sản phẩm với danh sách URL ảnh
       await _productRepository.createProduct(
         userId: userId,
         title: _nameController.text.trim(),
@@ -305,7 +284,7 @@ class _SellScreenState extends State<SellScreen> {
       body: Column(
         children: [
           ScreenHeader(
-            title: 'Đăng bán sản phẩm',
+            title: AppStrings.sellProduct,
             onBack: () => Navigator.of(context).pop(),
           ),
           Expanded(
@@ -437,7 +416,7 @@ class _SellScreenState extends State<SellScreen> {
                   ),
                   const SizedBox(height: 24),
                   PrimaryButton(
-                    label: 'Đăng sản phẩm',
+                    label: AppStrings.postProduct,
                     isLoading: _isUploading,
                     showArrow: false,
                     onPressed: _isUploading ? null : _handlePost,
