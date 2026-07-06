@@ -2,6 +2,7 @@ package market.campus.com.controller;
 
 import jakarta.validation.Valid;
 import market.campus.com.dto.AuthResponse;
+import market.campus.com.dto.GoogleLoginRequest;
 import market.campus.com.dto.LoginRequest;
 import market.campus.com.dto.RegisterRequest;
 import market.campus.com.service.AuthService;
@@ -33,6 +34,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
+        AuthResponse response = authService.googleLogin(request);
         return ResponseEntity.ok(response);
     }
 
