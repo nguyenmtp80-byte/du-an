@@ -7,19 +7,22 @@ public class PaymentQrResponse {
     private String bankAccountNumber;
     private String bankAccountName;
     private String content;
-    private String qrDataUrl; // Base64 encoded QR image
+    private String referenceCode; // Mã tham chiếu để đối soát
+    private String qrDataUrl;     // Base64 encoded QR image
     private String status;
 
     public PaymentQrResponse() {}
 
     public PaymentQrResponse(String orderId, int amount, String bankCode, String bankAccountNumber,
-                             String bankAccountName, String content, String qrDataUrl, String status) {
+                             String bankAccountName, String content, String referenceCode,
+                             String qrDataUrl, String status) {
         this.orderId = orderId;
         this.amount = amount;
         this.bankCode = bankCode;
         this.bankAccountNumber = bankAccountNumber;
         this.bankAccountName = bankAccountName;
         this.content = content;
+        this.referenceCode = referenceCode;
         this.qrDataUrl = qrDataUrl;
         this.status = status;
     }
@@ -41,6 +44,9 @@ public class PaymentQrResponse {
 
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+
+    public String getReferenceCode() { return referenceCode; }
+    public void setReferenceCode(String referenceCode) { this.referenceCode = referenceCode; }
 
     public String getQrDataUrl() { return qrDataUrl; }
     public void setQrDataUrl(String qrDataUrl) { this.qrDataUrl = qrDataUrl; }

@@ -31,9 +31,13 @@ public class QrCodeService {
     /**
      * Tạo nội dung QR theo chuẩn VietQR
      * Tham khảo: https://vietqr.io/
+     * Mỗi QR có mã tham chiếu unique = orderId để hệ thống đối soát khi nhận được tiền
      */
     public String generateVietQrContent(String orderId, int amount) {
-        String transferContent = "STUDENT-MARKET-" + orderId.substring(0, Math.min(8, orderId.length()));
+        // Mã tham chiếu: "MARKET-" + 8 ký tự đầu của orderId
+        // Khi ngân hàng báo có giao dịch đến, hệ thống đối soát qua mã này
+        String refCode = "MARKET-" + orderId.substring(0, Math.min(8, orderId.length()));
+        String transferContent = "TT " + refCode;
 
         // Merchant Account Information block
         String merchantInfo = "0010A000000727" +           // GUID VietQR
@@ -60,6 +64,13 @@ public class QrCodeService {
         qr.append("6304");                                  // CRC placeholder
 
         return qr.toString();
+    }
+
+    /**
+     * Lấy mã tham chiếu từ orderId (dùng để đối soát khi nhận webhook)
+     */
+    public String getReferenceCode(String orderId) {
+        return "MARKET-" + orderId.substring(0, Math.min(8, orderId.length()));
     }
 
     /**
