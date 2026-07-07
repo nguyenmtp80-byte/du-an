@@ -36,8 +36,18 @@ class PaymentApiService {
     required String userId,
     required String orderId,
   }) {
+    return _apiClient.post(
+      ApiConfig.paymentConfirmTransferEndpoint(orderId),
+      extraHeaders: {'X-User-Id': userId},
+    );
+  }
+
+  Future<Map<String, dynamic>> confirmSellerReceived({
+    required String userId,
+    required String orderId,
+  }) {
     return _apiClient.put(
-      ApiConfig.paymentQrConfirmEndpoint(orderId),
+      ApiConfig.paymentSellerConfirmEndpoint(orderId),
       extraHeaders: {'X-User-Id': userId},
     );
   }

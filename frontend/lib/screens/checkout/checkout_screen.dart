@@ -395,7 +395,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                           const SizedBox(height: 8),
                           _PaymentOption(
-                            label: 'Quét mã QR VNPay',
+                            label: 'Quét mã QR VietQR',
                             subtitle: 'Quét mã QR bằng app ngân hàng để thanh toán',
                             value: 'BANK_TRANSFER_QR',
                             groupValue: _paymentMethod,

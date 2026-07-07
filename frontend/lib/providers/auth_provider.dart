@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/user.dart';
 import '../repositories/auth_repository.dart';
 import '../services/api_client.dart';
+import '../services/google_auth_service.dart';
 
 enum AuthStatus {
   authenticated,
@@ -10,10 +11,14 @@ enum AuthStatus {
 }
 
 class AuthProvider extends ChangeNotifier {
-  AuthProvider({AuthRepository? authRepository})
-      : _authRepository = authRepository ?? AuthRepository();
+  AuthProvider({
+    AuthRepository? authRepository,
+    GoogleAuthService? googleAuthService,
+  })  : _authRepository = authRepository ?? AuthRepository(),
+        _googleAuthService = googleAuthService ?? GoogleAuthService();
 
   final AuthRepository _authRepository;
+  final GoogleAuthService _googleAuthService;
 
   bool _isInitializing = true;
   bool _isSubmitting = false;
@@ -105,12 +110,85 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     _beginSubmit();
 
+    await _googleAuthService.signOut();
     await _authRepository.logout();
     _user = null;
     _status = AuthStatus.unauthenticated;
     _errorMessage = null;
     _endSubmit();
   }
+
+  Future<bool> googleLogin({required String idToken}) async {
+    _beginSubmit();
+
+    try {
+      if (idToken.isEmpty) {
+        _handleSubmitError('Token Google không hợp lệ.');
+        return false;
+      }
+
+      final response = await _authRepository.googleLogin(idToken: idToken);
+      _user = response.user;
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+      _endSubmit();
+      return true;
+    } on ApiException catch (error) {
+      _handleSubmitError(error.message);
+      return false;
+    } catch (_) {
+      _handleSubmitError('Không thể đăng nhập Google. Vui lòng thử lại.');
+      return false;
+    }
+  }
+
+  Future<String?> requestPasswordReset({required String email}) async {
+    _beginSubmit();
+
+    try {
+      final message = await _authRepository.forgotPassword(email: email);
+      _errorMessage = null;
+      _endSubmit();
+      return message;
+    } on ApiException catch (error) {
+      _handleSubmitError(error.message);
+      return null;
+    } catch (_) {
+      _handleSubmitError('Không thể gửi OTP. Vui lòng thử lại.');
+      return null;
+    }
+  }
+
+  Future<bool> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    _beginSubmit();
+
+    try {
+      final response = await _authRepository.resetPassword(
+        email: email,
+        otp: otp,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
+      );
+      _user = response.user;
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+      _endSubmit();
+      return true;
+    } on ApiException catch (error) {
+      _handleSubmitError(error.message);
+      return false;
+    } catch (_) {
+      _handleSubmitError('Không thể đặt lại mật khẩu. Vui lòng thử lại.');
+      return false;
+    }
+  }
+
+  GoogleAuthService get googleAuthService => _googleAuthService;
 
   void clearError() {
     _errorMessage = null;

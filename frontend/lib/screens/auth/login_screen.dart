@@ -5,6 +5,7 @@ import '../../core/constants/app_routes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/google_sign_in_helper.dart';
 import '../../utils/validators.dart';
 import '../../widgets/auth_divider.dart';
 import '../../widgets/auth_hero_header.dart';
@@ -55,13 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showGoogleComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đăng nhập Google sẽ được tích hợp sau.'),
-      ),
-    );
-  }
+  Future<void> _handleGoogleSignIn() => handleGoogleSignIn(context);
 
   @override
   Widget build(BuildContext context) {
@@ -112,11 +107,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Tính năng quên mật khẩu sẽ có sau.'),
-                            ),
-                          );
+                          Navigator.of(context)
+                              .pushNamed(AppRoutes.forgotPassword);
                         },
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
@@ -142,7 +134,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                     const AuthDivider(),
                     const SizedBox(height: 16),
-                    GoogleSignInButton(onPressed: _showGoogleComingSoon),
+                    GoogleSignInButton(
+                      isLoading: auth.isLoading,
+                      onPressed: _handleGoogleSignIn,
+                    ),
                     const SizedBox(height: 32),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,

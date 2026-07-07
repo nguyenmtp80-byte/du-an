@@ -60,4 +60,46 @@ class AuthApiService {
       token: token,
     );
   }
+
+  Future<AuthResponse> googleLogin({required String idToken}) async {
+    final data = await _apiClient.post(
+      ApiConfig.googleLoginEndpoint,
+      body: {'idToken': idToken},
+    );
+
+    return AuthResponse.fromJson(data);
+  }
+
+  Future<String> forgotPassword({required String email}) async {
+    final data = await _apiClient.post(
+      ApiConfig.forgotPasswordEndpoint,
+      body: {'email': email.trim()},
+    );
+
+    return data['message'] as String? ?? 'OTP đã được gửi đến email của bạn';
+  }
+
+  Future<AuthResponse> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final data = await _apiClient.post(
+      ApiConfig.resetPasswordEndpoint,
+      body: {
+        'email': email.trim(),
+        'otp': otp.trim(),
+        'newPassword': newPassword,
+        'confirmPassword': confirmPassword,
+      },
+    );
+
+    final authData = data['data'];
+    if (authData is Map<String, dynamic>) {
+      return AuthResponse.fromJson(authData);
+    }
+
+    return AuthResponse.fromJson(data);
+  }
 }

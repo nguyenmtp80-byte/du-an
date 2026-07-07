@@ -11,6 +11,14 @@ class AppStrings {
   static const String emailHint = 'Email sinh viên';
   static const String passwordHint = 'Mật khẩu';
   static const String forgotPassword = 'Quên mật khẩu?';
+  static const String forgotPasswordTitle = 'Quên mật khẩu';
+  static const String resetPasswordTitle = 'Đặt lại mật khẩu';
+  static const String sendOtp = 'Gửi mã OTP';
+  static const String otpHint = 'Mã OTP (6 số)';
+  static const String newPasswordHint = 'Mật khẩu mới';
+  static const String confirmPasswordHint = 'Xác nhận mật khẩu';
+  static const String resetPasswordButton = 'Đặt lại mật khẩu';
+  static const String googleSignIn = 'Đăng nhập với Google';
   static const String noAccount = 'Chưa có tài khoản? ';
 
   static const String searchHint = 'Tìm sách, laptop, đồ dorm...';

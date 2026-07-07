@@ -34,7 +34,9 @@ bool orderMatchesListTab(Order order, OrderListTab tab) {
     case OrderListTab.all:
       return true;
     case OrderListTab.approved:
-      return status == 'APPROVED' || status == 'CONFIRMED';
+      return status == 'APPROVED' ||
+          status == 'CONFIRMED' ||
+          status == 'PAID';
     case OrderListTab.completed:
       return status == 'COMPLETED' || status == 'DELIVERED';
     case OrderListTab.cancelled:

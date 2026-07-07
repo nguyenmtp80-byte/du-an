@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../screens/auth/auth_gate.dart';
+import '../../screens/auth/forgot_password_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/register_screen.dart';
 import '../../screens/checkout/checkout_screen.dart';
@@ -26,6 +27,14 @@ class AppRouter {
         return _page(const LoginScreen(), settings);
       case AppRoutes.register:
         return _page(const RegisterScreen(), settings);
+      case AppRoutes.forgotPassword:
+        return _page(const ForgotPasswordScreen(), settings);
+      case AppRoutes.resetPassword:
+        final email = _readStringArg(settings, AppRoutes.emailArg);
+        if (email == null) {
+          return _badArgs(settings);
+        }
+        return _page(ResetPasswordScreen(email: email), settings);
       case AppRoutes.main:
         return _page(const MainShell(), settings);
       case AppRoutes.sell:

@@ -79,6 +79,33 @@ class AuthRepository {
     await _clearSession();
   }
 
+  Future<AuthResponse> googleLogin({required String idToken}) async {
+    final response = await _authApiService.googleLogin(idToken: idToken);
+    await _saveSession(response);
+    return response;
+  }
+
+  Future<String> forgotPassword({required String email}) {
+    return _authApiService.forgotPassword(email: email);
+  }
+
+  Future<AuthResponse> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await _authApiService.resetPassword(
+      email: email,
+      otp: otp,
+      newPassword: newPassword,
+      confirmPassword: confirmPassword,
+    );
+
+    await _saveSession(response);
+    return response;
+  }
+
   Future<User?> getStoredUser() async {
     final prefs = await _preferences;
     final userJson = prefs.getString(_userKey);

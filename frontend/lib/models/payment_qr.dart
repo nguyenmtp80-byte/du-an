@@ -42,6 +42,7 @@ class PaymentQr {
     required this.bankAccountNumber,
     required this.bankAccountName,
     required this.content,
+    required this.referenceCode,
     required this.qrDataUrl,
     required this.status,
   });
@@ -52,6 +53,7 @@ class PaymentQr {
   final String bankAccountNumber;
   final String bankAccountName;
   final String content;
+  final String referenceCode;
   final String qrDataUrl;
   final String status;
 
@@ -63,8 +65,22 @@ class PaymentQr {
       bankAccountNumber: json['bankAccountNumber']?.toString() ?? '',
       bankAccountName: json['bankAccountName']?.toString() ?? '',
       content: json['content']?.toString() ?? '',
+      referenceCode: json['referenceCode']?.toString() ?? '',
       qrDataUrl: json['qrDataUrl']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
     );
+  }
+}
+
+String formatBankName(String bankCode) {
+  switch (bankCode) {
+    case '970422':
+      return 'MB Bank';
+    case '970436':
+      return 'Vietcombank';
+    case '970407':
+      return 'Techcombank';
+    default:
+      return bankCode;
   }
 }

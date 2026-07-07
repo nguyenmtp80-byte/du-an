@@ -29,6 +29,9 @@ class ApiConfig {
 
   static const String loginEndpoint = '/auth/login';
   static const String registerEndpoint = '/auth/register';
+  static const String googleLoginEndpoint = '/auth/google';
+  static const String forgotPasswordEndpoint = '/auth/forgot-password';
+  static const String resetPasswordEndpoint = '/auth/reset-password';
   static const String logoutEndpoint = '/auth/logout';
 
   static const String productsEndpoint = '/products';
@@ -57,8 +60,12 @@ class ApiConfig {
   static String orderDetailEndpoint(String orderId) => '/orders/$orderId';
   static String paymentInfoEndpoint(String orderId) => '/payments/$orderId/info';
   static String paymentQrEndpoint(String orderId) => '/payments/$orderId/qr';
-  static String paymentQrConfirmEndpoint(String orderId) =>
-      '/payments/$orderId/qr/confirm';
+  static String paymentConfirmTransferEndpoint(String orderId) =>
+      '/payments/$orderId/confirm-transfer';
+  static String paymentSellerConfirmEndpoint(String orderId) =>
+      '/payments/$orderId/seller-confirm';
+  static String paymentTransactionEndpoint(String orderId) =>
+      '/payments/$orderId/transaction';
   static String paymentQrCancelEndpoint(String orderId) =>
       '/payments/$orderId/qr/cancel';
   static String orderAcceptEndpoint(String orderId) => '/orders/$orderId/accept';

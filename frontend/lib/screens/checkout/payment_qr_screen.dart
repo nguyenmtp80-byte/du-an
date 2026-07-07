@@ -118,8 +118,9 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
       }
 
       await _showSuccessAndExit(
-        title: 'Thanh toán QR thành công!',
-        message: 'Đơn hàng đã được xác nhận thanh toán. Người bán sẽ chuẩn bị hàng.',
+        title: 'Thanh toán thành công!',
+        message:
+            'Hệ thống đã nhận được tiền. Người bán sẽ xác nhận và chuẩn bị hàng.',
       );
     } on ApiException catch (error) {
       if (mounted) {
@@ -367,7 +368,7 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
         body: Column(
           children: [
             ScreenHeader(
-              title: 'Thanh toán QR VNPay',
+              title: 'Thanh toán VietQR',
               onBack: () async {
                 final shouldPop = await _handleExitAttempt();
                 if (shouldPop && mounted) {
@@ -404,6 +405,34 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.school_outlined, color: Color(0xFF2563EB), size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Demo cho giảng viên: Mã QR hiển thị thông tin chuyển khoản VietQR. '
+                    'App ngân hàng có thể không quét được vì đây là môi trường sandbox. '
+                    'Để hoàn tất demo, bấm "Tôi đã chuyển khoản" bên dưới.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.45,
+                      color: AppColors.gray700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -427,10 +456,10 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.qr_code_scanner, size: 16, color: AppColors.primary),
+                      Icon(Icons.qr_code_2, size: 16, color: AppColors.primary),
                       SizedBox(width: 6),
                       Text(
-                        'Quét mã bằng app ngân hàng / VNPay',
+                        'VietQR • Quét bằng app ngân hàng',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -492,9 +521,17 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
           _InfoCard(
             title: 'Thông tin chuyển khoản',
             rows: [
+              if (paymentQr.referenceCode.isNotEmpty)
+                _InfoRow(
+                  label: 'Mã tham chiếu',
+                  value: paymentQr.referenceCode,
+                  onCopy: () =>
+                      _copyText(paymentQr.referenceCode, 'mã tham chiếu'),
+                ),
               _InfoRow(
                 label: 'Ngân hàng',
-                value: paymentQr.bankCode,
+                value:
+                    '${formatBankName(paymentQr.bankCode)} (${paymentQr.bankCode})',
                 onCopy: () => _copyText(paymentQr.bankCode, 'mã ngân hàng'),
               ),
               _InfoRow(
@@ -583,7 +620,7 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
                       ),
                     )
                   : const Text(
-                      'Tôi đã thanh toán',
+                      'Tôi đã chuyển khoản',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
             ),
