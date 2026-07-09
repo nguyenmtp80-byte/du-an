@@ -97,7 +97,6 @@ class ApiClient {
     }
   }
 
-  /// Upload file (multipart) và trả về response JSON
   Future<Map<String, dynamic>> uploadMultipart(
     String endpoint, {
     required List<http.MultipartFile> files,

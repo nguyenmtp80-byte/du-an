@@ -1,3 +1,7 @@
+import 'dart:typed_data';
+
+import 'package:http/http.dart' as http;
+
 import '../config/api_config.dart';
 import '../models/product.dart';
 import '../services/api_client.dart';
@@ -42,7 +46,7 @@ class ProductRepository {
       try {
         products.add(await fetchProductDetail(productId));
       } on ApiException {
-        // Bỏ qua sản phẩm không tồn tại trong DB.
+        continue;
       }
     }
 
@@ -92,6 +96,37 @@ class ProductRepository {
     );
 
     return Product.fromJson(response);
+  }
+
+  Future<List<String>> uploadProductImages(List<Uint8List> imageBytesList) async {
+    if (imageBytesList.isEmpty) {
+      return [];
+    }
+
+    final apiClient = ApiClient();
+    final multipartFiles = <http.MultipartFile>[];
+
+    for (var index = 0; index < imageBytesList.length; index++) {
+      multipartFiles.add(
+        http.MultipartFile.fromBytes(
+          'files',
+          imageBytesList[index],
+          filename: 'product_$index.jpg',
+        ),
+      );
+    }
+
+    final response = await apiClient.uploadMultipart(
+      ApiConfig.uploadImagesEndpoint,
+      files: multipartFiles,
+    );
+
+    final urls = response['urls'];
+    if (urls is List) {
+      return urls.map((url) => url.toString()).toList();
+    }
+
+    return [];
   }
 
   bool _shouldUseDetailFallback(ApiException error) {

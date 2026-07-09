@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/cart_item.dart';
 import '../../models/order.dart';
 import '../../models/product.dart';
+import '../../core/constants/app_routes.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../services/api_client.dart';
@@ -77,9 +78,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       try {
         products.add(await _productRepository.fetchProductDetail(item.productId));
       } on ApiException {
-        // Bỏ qua sản phẩm không tải được.
+        continue;
       } catch (_) {
-        // Bỏ qua sản phẩm không tải được.
+        continue;
       }
     }
 
@@ -210,6 +211,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       cart.clearLocalCart();
 
       if (!mounted) {
+        return;
+      }
+
+      if (_paymentMethod == 'BANK_TRANSFER_QR') {
+        setState(() => _isSubmitting = false);
+        Navigator.of(context).pushReplacementNamed(
+          AppRoutes.paymentQr,
+          arguments: {
+            AppRoutes.orderIdArg: orderDetail.id,
+            'totalAmount': orderDetail.totalAmount,
+          },
+        );
         return;
       }
 
@@ -382,10 +395,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                           const SizedBox(height: 8),
                           _PaymentOption(
-                            label: 'Chuyển khoản',
-                            subtitle: 'Chuyển khoản ngân hàng (demo)',
-                            value: 'BANK_TRANSFER',
+                            label: 'Quét mã QR VietQR',
+                            subtitle: 'Quét mã QR bằng app ngân hàng để thanh toán',
+                            value: 'BANK_TRANSFER_QR',
                             groupValue: _paymentMethod,
+                            leading: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0066B3).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.qr_code_2,
+                                color: Color(0xFF0066B3),
+                                size: 20,
+                              ),
+                            ),
                             onChanged: (value) =>
                                 setState(() => _paymentMethod = value!),
                           ),
@@ -454,9 +480,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Đặt hàng',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    : Text(
+                        _paymentMethod == 'BANK_TRANSFER_QR'
+                            ? 'Đặt hàng & thanh toán QR'
+                            : 'Đặt hàng',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
               ),
             ),
@@ -726,6 +757,7 @@ class _PaymentOption extends StatelessWidget {
     required this.value,
     required this.groupValue,
     required this.onChanged,
+    this.leading,
   });
 
   final String label;
@@ -733,6 +765,7 @@ class _PaymentOption extends StatelessWidget {
   final String value;
   final String groupValue;
   final ValueChanged<String?> onChanged;
+  final Widget? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -760,6 +793,10 @@ class _PaymentOption extends StatelessWidget {
                 onChanged: onChanged,
                 activeColor: AppColors.primary,
               ),
+              if (leading != null) ...[
+                leading!,
+                const SizedBox(width: 10),
+              ],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

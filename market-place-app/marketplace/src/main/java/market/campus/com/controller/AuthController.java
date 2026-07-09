@@ -2,14 +2,14 @@ package market.campus.com.controller;
 
 import jakarta.validation.Valid;
 import market.campus.com.dto.AuthResponse;
+import market.campus.com.dto.ForgotPasswordRequest;
+import market.campus.com.dto.GoogleLoginRequest;
 import market.campus.com.dto.LoginRequest;
 import market.campus.com.dto.RegisterRequest;
-<<<<<<< Updated upstream
-=======
 import market.campus.com.dto.ResetPasswordRequest;
 import market.campus.com.dto.SendOtpRequest;
 import market.campus.com.dto.VerifyRegisterOtpRequest;
->>>>>>> Stashed changes
+import market.campus.com.dto.ResetPasswordRequest;
 import market.campus.com.service.AuthService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -42,8 +42,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-<<<<<<< Updated upstream
-=======
     @PostMapping("/google")
     public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request) {
         AuthResponse response = authService.googleLogin(request);
@@ -90,12 +88,40 @@ public class AuthController {
         }
     }
 
->>>>>>> Stashed changes
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
         String token = extractToken(authorization);
         authService.logout(token);
         return ResponseEntity.noContent().build();
+    }
+
+    // ==================== INNER RESPONSE CLASSES ====================
+
+    public static class MessageResponse {
+        private String message;
+        public MessageResponse(String message) { this.message = message; }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+    }
+
+    public static class ErrorResponse {
+        private String message;
+        public ErrorResponse(String message) { this.message = message; }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+    }
+
+    public static class SuccessResponse {
+        private String message;
+        private Object data;
+        public SuccessResponse(String message, Object data) {
+            this.message = message;
+            this.data = data;
+        }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+        public Object getData() { return data; }
+        public void setData(Object data) { this.data = data; }
     }
 
     private String extractToken(String authorizationHeader) {

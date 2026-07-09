@@ -5,7 +5,6 @@ import '../../providers/auth_provider.dart';
 import '../shell/main_shell.dart';
 import 'login_screen.dart';
 
-/// Quyết định hiển thị Login hay Home dựa trên trạng thái đăng nhập.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 

@@ -74,6 +74,7 @@ class AuthRepository {
         await _authApiService.logout(token: token);
       } catch (_) {
       }
+      } catch (_) {}
     }
 
     await _clearSession();
@@ -95,6 +96,7 @@ class AuthRepository {
   }) {
     return _authApiService.verifyRegisterOtp(email: email, otp: otp);
   }
+
 
   Future<String> forgotPassword({required String email}) {
     return _authApiService.forgotPassword(email: email);

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_routes.dart';
+import '../../core/constants/app_sizes.dart';
+import '../../core/constants/app_strings.dart';
+import '../../core/widgets/state_views.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/product_card.dart';
-import '../notifications/notifications_screen.dart';
-import '../product/product_detail_screen.dart';
 import '../product/product_filter_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -61,10 +63,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openNotifications() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (_) => const NotificationsScreen(showBackButton: true),
-      ),
+    await Navigator.of(context).pushNamed(
+      AppRoutes.notifications,
+      arguments: true,
     );
 
     if (!mounted) {
@@ -75,10 +76,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openProductDetail(String productId) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ProductDetailScreen(productId: productId),
-      ),
+    Navigator.of(context).pushNamed(
+      AppRoutes.productDetail,
+      arguments: {AppRoutes.productIdArg: productId},
     );
   }
 
@@ -97,26 +97,35 @@ class _HomeScreenState extends State<HomeScreen> {
         color: AppColors.primary,
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(child: _HomeHeader(
-              searchController: _searchController,
-              onFilterTap: _openFilterSheet,
-              onNotificationTap: _openNotifications,
-              onSearchChanged: productProvider.setSearchQuery,
-              showNotificationBadge: hasUnread,
-            )),
+            SliverToBoxAdapter(
+              child: _HomeHeader(
+                searchController: _searchController,
+                onFilterTap: _openFilterSheet,
+                onNotificationTap: _openNotifications,
+                onSearchChanged: productProvider.setSearchQuery,
+                showNotificationBadge: hasUnread,
+              ),
+            ),
             if (productProvider.isUsingDetailFallback)
               const SliverToBoxAdapter(child: _FallbackBanner()),
-            SliverToBoxAdapter(child: _CategoryChips(
-              categories: productProvider.categories,
-              activeCategory: productProvider.activeCategory,
-              onCategorySelected: productProvider.setActiveCategory,
-            )),
+            SliverToBoxAdapter(
+              child: _CategoryChips(
+                categories: productProvider.categories,
+                activeCategory: productProvider.activeCategory,
+                onCategorySelected: productProvider.setActiveCategory,
+              ),
+            ),
             const SliverToBoxAdapter(child: _PromoBanner()),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+              padding: const EdgeInsets.fromLTRB(
+                AppSizes.screenPadding,
+                AppSizes.screenPadding,
+                AppSizes.screenPadding,
+                AppSizes.screenPadding,
+              ),
               sliver: SliverToBoxAdapter(
                 child: Text(
-                  'Gợi ý cho bạn',
+                  AppStrings.suggestedForYou,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.gray900,
@@ -127,30 +136,39 @@ class _HomeScreenState extends State<HomeScreen> {
             if (productProvider.isLoadingList)
               const SliverFillRemaining(
                 hasScrollBody: false,
-                child: Center(child: CircularProgressIndicator()),
+                child: LoadingStateView(),
               )
             else if (productProvider.listError != null)
               SliverFillRemaining(
                 hasScrollBody: false,
-                child: _ErrorState(
+                child: ErrorStateView(
                   message: productProvider.listError!,
                   onRetry: productProvider.loadProducts,
+                  retryLabel: AppStrings.retry,
                 ),
               )
             else if (productProvider.filteredProducts.isEmpty)
               const SliverFillRemaining(
                 hasScrollBody: false,
-                child: _EmptyState(),
+                child: EmptyStateView(
+                  title: AppStrings.emptyProductsTitle,
+                  subtitle: AppStrings.emptyProductsSubtitle,
+                ),
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSizes.screenPadding,
+                  0,
+                  AppSizes.screenPadding,
+                  120,
+                ),
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 0.74,
+                    crossAxisCount: AppSizes.productGridColumns,
+                    mainAxisSpacing: AppSizes.gridSpacing,
+                    crossAxisSpacing: AppSizes.gridSpacing,
+                    childAspectRatio: AppSizes.gridAspectRatio,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -196,8 +214,8 @@ class _HomeHeader extends StatelessWidget {
       decoration: const BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
+          bottomLeft: Radius.circular(AppSizes.headerRadius),
+          bottomRight: Radius.circular(AppSizes.headerRadius),
         ),
         boxShadow: [
           BoxShadow(
@@ -208,9 +226,9 @@ class _HomeHeader extends StatelessWidget {
         ],
       ),
       padding: EdgeInsets.fromLTRB(
-        24,
+        AppSizes.screenPadding,
         MediaQuery.paddingOf(context).top + 16,
-        24,
+        AppSizes.screenPadding,
         16,
       ),
       child: Column(
@@ -222,7 +240,7 @@ class _HomeHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Campus Market',
+                      AppStrings.campusMarket,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -239,7 +257,7 @@ class _HomeHeader extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'State University Campus',
+                          AppStrings.campusLocation,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 12,
@@ -271,13 +289,13 @@ class _HomeHeader extends StatelessWidget {
             controller: searchController,
             onChanged: onSearchChanged,
             decoration: InputDecoration(
-              hintText: 'Tìm sách, laptop, đồ dorm...',
+              hintText: AppStrings.searchHint,
               hintStyle: const TextStyle(color: AppColors.gray400, fontSize: 14),
               prefixIcon: const Icon(Icons.search, color: AppColors.gray400),
               filled: true,
               fillColor: Colors.white,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppSizes.cardRadius),
                 borderSide: BorderSide.none,
               ),
               contentPadding: const EdgeInsets.symmetric(
@@ -347,7 +365,12 @@ class _FallbackBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      margin: const EdgeInsets.fromLTRB(
+        AppSizes.screenPadding,
+        16,
+        AppSizes.screenPadding,
+        0,
+      ),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.primaryLight,
@@ -379,14 +402,20 @@ class _CategoryChips extends StatelessWidget {
     return SizedBox(
       height: 48,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+        padding: const EdgeInsets.fromLTRB(
+          AppSizes.screenPadding,
+          16,
+          AppSizes.screenPadding,
+          0,
+        ),
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
         separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final category = categories[index];
           final isActive = category == activeCategory;
-          final label = category == 'All' ? 'Tất cả' : category;
+          final label =
+              category == 'All' ? AppStrings.allCategories : category;
 
           return FilterChip(
             label: Text(label),
@@ -404,7 +433,7 @@ class _CategoryChips extends StatelessWidget {
               color: isActive ? AppColors.primary : AppColors.gray200,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppSizes.chipRadius),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 8),
           );
@@ -420,13 +449,18 @@ class _PromoBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      margin: const EdgeInsets.fromLTRB(
+        AppSizes.screenPadding,
+        16,
+        AppSizes.screenPadding,
+        0,
+      ),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFFFB923C), AppColors.primary],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.2),
@@ -468,7 +502,7 @@ class _PromoBanner extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppSizes.chipRadius),
                   ),
                   child: const Text(
                     'Mua ngay',
@@ -491,86 +525,6 @@ class _PromoBanner extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 56,
-              color: AppColors.gray400.withValues(alpha: 0.8),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Chưa có sản phẩm phù hợp',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.gray900,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Thử đổi bộ lọc hoặc từ khóa tìm kiếm.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.gray500, fontSize: 14),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
-  });
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.cloud_off_outlined, size: 56, color: AppColors.gray400),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.gray700, fontSize: 14, height: 1.5),
-            ),
-            const SizedBox(height: 20),
-            FilledButton(
-              onPressed: onRetry,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Thử lại'),
-            ),
-          ],
-        ),
       ),
     );
   }

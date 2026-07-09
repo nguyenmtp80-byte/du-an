@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_routes.dart';
 import '../../models/order.dart';
 import '../../models/product.dart';
 import '../../providers/auth_provider.dart';
@@ -8,9 +9,6 @@ import '../../services/api_client.dart';
 import '../../services/order_api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../repositories/product_repository.dart';
-import 'my_listings_screen.dart';
-import 'my_orders_screen.dart';
-import 'sold_orders_screen.dart';
 import '../../utils/order_stats.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -103,21 +101,25 @@ class ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _openOrders(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const MyOrdersScreen()),
-    ).then((_) => loadOrderStats());
+    Navigator.of(context)
+        .pushNamed(AppRoutes.myOrders)
+        .then((_) => loadOrderStats());
   }
 
   void _openSoldOrders(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const SoldOrdersScreen()),
-    ).then((_) => loadOrderStats());
+    Navigator.of(context)
+        .pushNamed(AppRoutes.soldOrders)
+        .then((_) => loadOrderStats());
   }
 
   void _openListings(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const MyListingsScreen()),
-    ).then((_) => loadOrderStats());
+    Navigator.of(context)
+        .pushNamed(AppRoutes.myListings)
+        .then((_) => loadOrderStats());
+  }
+
+  void _openHelpCenter(BuildContext context) {
+    Navigator.of(context).pushNamed(AppRoutes.helpCenter);
   }
 
   Future<void> _confirmLogout(BuildContext context) async {
@@ -217,7 +219,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                   _ProfileMenuItem(
                     icon: Icons.help_outline,
                     label: 'Trung tâm trợ giúp',
-                    onTap: () {},
+                    onTap: () => _openHelpCenter(context),
                   ),
                   const SizedBox(height: 12),
                   _ProfileMenuItem(

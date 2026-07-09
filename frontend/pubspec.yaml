@@ -17,6 +17,7 @@ dependencies:
   latlong2: ^0.9.1
   shared_preferences: ^2.3.3
   uuid: ^4.5.1
+  google_sign_in: ^6.2.2
 
 dev_dependencies:
   flutter_test:
@@ -28,3 +29,4 @@ flutter:
   assets:
     - assets/images/app_logo.png
     - assets/images/app_icon.png
+    - assets/images/google_logo.png

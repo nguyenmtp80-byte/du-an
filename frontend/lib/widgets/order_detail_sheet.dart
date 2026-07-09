@@ -5,6 +5,7 @@ import '../models/product.dart';
 import '../repositories/product_repository.dart';
 import '../services/api_client.dart';
 import '../services/order_api_service.dart';
+import '../services/payment_api_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 import '../utils/product_location_utils.dart';
@@ -26,6 +27,8 @@ String formatOrderStatusLabel(String status) {
   switch (status.toUpperCase()) {
     case 'PENDING':
       return 'Chờ xác nhận';
+    case 'PAID':
+      return 'Đã thanh toán';
     case 'APPROVED':
       return 'Đã xác nhận';
     case 'COMPLETED':
@@ -49,6 +52,8 @@ String formatPaymentMethodLabel(String method) {
       return 'Tiền mặt';
     case 'BANK_TRANSFER':
       return 'Chuyển khoản';
+    case 'BANK_TRANSFER_QR':
+      return 'Quét mã QR VietQR';
     default:
       return method;
   }
@@ -105,6 +110,7 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
   bool _isLoadingProducts = false;
   List<Product> _orderProducts = [];
   final _productRepository = ProductRepository();
+  final _paymentApiService = PaymentApiService();
 
   @override
   void initState() {
@@ -129,9 +135,9 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
       try {
         products.add(await _productRepository.fetchProductDetail(item.productId));
       } on ApiException {
-        // Bỏ qua sản phẩm không tải được.
+        continue;
       } catch (_) {
-        // Bỏ qua sản phẩm không tải được.
+        continue;
       }
     }
 
@@ -161,8 +167,20 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
     );
   }
 
+  bool get _isCashOrder => _order.paymentMethod.toUpperCase() == 'CASH';
+
+  bool get _isQrOrder =>
+      _order.paymentMethod.toUpperCase() == 'BANK_TRANSFER_QR';
+
   bool get _canAccept =>
-      widget.enableSellerActions && _order.status.toUpperCase() == 'PENDING';
+      widget.enableSellerActions &&
+      _order.status.toUpperCase() == 'PENDING' &&
+      _isCashOrder;
+
+  bool get _canConfirmQrReceived =>
+      widget.enableSellerActions &&
+      _order.status.toUpperCase() == 'PAID' &&
+      _isQrOrder;
 
   bool get _canComplete =>
       widget.enableSellerActions && _order.status.toUpperCase() == 'APPROVED';
@@ -208,6 +226,58 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Không thể xác nhận đơn hàng.')),
+      );
+    }
+  }
+
+  Future<void> _handleConfirmQrReceived() async {
+    final userId = widget.userId;
+    if (userId == null || userId.isEmpty) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      await _paymentApiService.confirmSellerReceived(
+        userId: userId,
+        orderId: _order.id,
+      );
+
+      final updated = await widget.orderApiService?.getOrderDetail(
+        userId: userId,
+        orderId: _order.id,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        if (updated != null) {
+          _order = updated;
+        }
+        _isSubmitting = false;
+      });
+      widget.onOrderUpdated?.call();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã xác nhận nhận tiền. Chuẩn bị hàng cho khách.')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không thể xác nhận nhận tiền.')),
       );
     }
   }
@@ -504,6 +574,30 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
             ),
           ),
           const SizedBox(height: 16),
+          if (_canConfirmQrReceived)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: FilledButton(
+                onPressed: _isSubmitting ? null : _handleConfirmQrReceived,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Xác nhận đã nhận tiền'),
+              ),
+            ),
           if (_canAccept)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),

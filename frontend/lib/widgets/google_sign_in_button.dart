@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../core/constants/app_strings.dart';
 import '../theme/app_theme.dart';
 
 class GoogleSignInButton extends StatelessWidget {
-  const GoogleSignInButton({super.key, this.onPressed});
+  const GoogleSignInButton({
+    super.key,
+    this.onPressed,
+    this.isLoading = false,
+  });
 
   final VoidCallback? onPressed;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: AppColors.gray700,
@@ -22,79 +28,32 @@ class GoogleSignInButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const _GoogleIcon(),
-            const SizedBox(width: 12),
-            const Text(
-              'Google',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/images/google_logo.png',
+                    width: 20,
+                    height: 20,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    AppStrings.googleSignIn,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
-}
-
-class _GoogleIcon extends StatelessWidget {
-  const _GoogleIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 20,
-      height: 20,
-      child: CustomPaint(painter: _GoogleLogoPainter()),
-    );
-  }
-}
-
-class _GoogleLogoPainter extends CustomPainter {
-  const _GoogleLogoPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-
-    paint.color = const Color(0xFF4285F4);
-    canvas.drawArc(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      -0.4,
-      1.2,
-      true,
-      paint,
-    );
-
-    paint.color = const Color(0xFF34A853);
-    canvas.drawArc(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      0.8,
-      1.0,
-      true,
-      paint,
-    );
-
-    paint.color = const Color(0xFFFBBC05);
-    canvas.drawArc(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      2.0,
-      1.0,
-      true,
-      paint,
-    );
-
-    paint.color = const Color(0xFFEA4335);
-    canvas.drawArc(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      3.2,
-      1.0,
-      true,
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

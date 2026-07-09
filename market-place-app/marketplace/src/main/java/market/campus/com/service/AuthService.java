@@ -1,14 +1,14 @@
 package market.campus.com.service;
 
 import market.campus.com.dto.AuthResponse;
+import market.campus.com.dto.ForgotPasswordRequest;
+import market.campus.com.dto.GoogleLoginRequest;
 import market.campus.com.dto.LoginRequest;
 import market.campus.com.dto.RegisterRequest;
-<<<<<<< Updated upstream
-=======
 import market.campus.com.dto.ResetPasswordRequest;
 import market.campus.com.dto.SendOtpRequest;
 import market.campus.com.dto.VerifyRegisterOtpRequest;
->>>>>>> Stashed changes
+import market.campus.com.dto.ResetPasswordRequest;
 
 public interface AuthService {
 
@@ -16,9 +16,9 @@ public interface AuthService {
 
     AuthResponse login(LoginRequest request);
 
+    AuthResponse googleLogin(GoogleLoginRequest request);
+
     void logout(String token);
-<<<<<<< Updated upstream
-=======
 
     String forgotPassword(ForgotPasswordRequest request);
 
@@ -27,5 +27,4 @@ public interface AuthService {
     String sendRegisterOtp(SendOtpRequest request);
 
     String verifyRegisterOtp(VerifyRegisterOtpRequest request);
->>>>>>> Stashed changes
 }

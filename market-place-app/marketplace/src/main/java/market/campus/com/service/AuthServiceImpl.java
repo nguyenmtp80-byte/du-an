@@ -1,22 +1,19 @@
 package market.campus.com.service;
 
-import market.campus.com.dto.AuthResponse;
-import market.campus.com.dto.LoginRequest;
-import market.campus.com.dto.RegisterRequest;
-import market.campus.com.dto.UserResponse;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import market.campus.com.dto.*;
 import market.campus.com.exception.BadRequestException;
 import market.campus.com.model.User;
 import market.campus.com.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
-<<<<<<< Updated upstream
-=======
 import java.util.Random;
 import java.util.Set;
->>>>>>> Stashed changes
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,11 +22,15 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final GoogleTokenVerifier googleTokenVerifier;
     private final Map<String, String> tokenStore = new ConcurrentHashMap<>();
 
-    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthServiceImpl(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder,
+                           GoogleTokenVerifier googleTokenVerifier) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.googleTokenVerifier = googleTokenVerifier;
     }
 
     // ==================== REGISTER EMAIL OTP VERIFICATION ====================
@@ -179,10 +180,151 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public AuthResponse googleLogin(GoogleLoginRequest request) {
+        // Verify Google ID token
+        GoogleIdToken.Payload payload = googleTokenVerifier.verify(request.getIdToken());
+
+        // Extract user info from Google payload
+        String googleId = payload.getSubject(); // Google's unique user ID (sub)
+        String email = payload.getEmail();
+        String fullName = (String) payload.get("name");
+        String avatarUrl = (String) payload.get("picture");
+
+        // Check if user already exists by Google ID or email
+        Optional<User> existingUser = userRepository.findById(googleId);
+        if (existingUser.isEmpty()) {
+            existingUser = userRepository.findByEmail(email);
+        }
+
+        User user;
+        if (existingUser.isPresent()) {
+            user = existingUser.get();
+            // Update info from Google if needed
+            boolean updated = false;
+            if (fullName != null && !fullName.equals(user.getFullName())) {
+                user.setFullName(fullName);
+                updated = true;
+            }
+            if (avatarUrl != null && !avatarUrl.equals(user.getAvatarUrl())) {
+                user.setAvatarUrl(avatarUrl);
+                updated = true;
+            }
+            // If user was found by email but has different ID, update the ID to Google ID
+            if (!user.getId().equals(googleId)) {
+                // We keep the existing ID to avoid FK issues, but update Google info
+                // In practice, you'd want to handle this more carefully
+            }
+            if (updated) {
+                userRepository.save(user);
+            }
+        } else {
+            // Create new user from Google info
+            user = new User(
+                    googleId,
+                    email,
+                    null, // no password for Google users
+                    fullName,
+                    avatarUrl,
+                    null, // phone
+                    null  // studentId
+            );
+            user = userRepository.save(user);
+        }
+
+        return buildAuthResponse(user);
+    }
+
+    @Override
     public void logout(String token) {
         if (token != null) {
             tokenStore.remove(token);
         }
+    }
+
+    // ==================== FORGOT PASSWORD ====================
+    // In-memory OTP store: key=email, value=otp
+    private final Map<String, OtpEntry> otpStore = new ConcurrentHashMap<>();
+
+    private static class OtpEntry {
+        String otp;
+        LocalDateTime expiry;
+
+        OtpEntry(String otp, LocalDateTime expiry) {
+            this.otp = otp;
+            this.expiry = expiry;
+        }
+
+        boolean isValid() {
+            return LocalDateTime.now().isBefore(expiry);
+        }
+    }
+
+    @Override
+    public String forgotPassword(ForgotPasswordRequest request) {
+        // Kiểm tra email có tồn tại không
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty()) {
+            throw new BadRequestException("Email không tồn tại trong hệ thống");
+        }
+
+        User user = userOpt.get();
+
+        // Kiểm tra user có password không (Google user không có password)
+        if (user.getPassword() == null) {
+            throw new BadRequestException("Tài khoản Google không có mật khẩu. Vui lòng đăng nhập bằng Google");
+        }
+
+        // Tạo OTP 6 chữ số
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        LocalDateTime expiry = LocalDateTime.now().plusMinutes(5); // OTP hết hạn sau 5 phút
+
+        otpStore.put(request.getEmail(), new OtpEntry(otp, expiry));
+
+        // Trong môi trường thực, gửi email/SMS chứa OTP
+        // Vì sandbox, in ra console để test
+        System.out.println("==========================================");
+        System.out.println("OTP for " + request.getEmail() + ": " + otp);
+        System.out.println("Expiry: " + expiry);
+        System.out.println("==========================================");
+
+        return "OTP đã được gửi đến email " + request.getEmail() + " (sandbox: " + otp + ")";
+    }
+
+    @Override
+    public AuthResponse resetPassword(ResetPasswordRequest request) {
+        // Kiểm tra mật khẩu xác nhận
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BadRequestException("Mật khẩu xác nhận không khớp");
+        }
+
+        // Kiểm tra email
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty()) {
+            throw new BadRequestException("Email không tồn tại trong hệ thống");
+        }
+
+        // Kiểm tra OTP
+        OtpEntry otpEntry = otpStore.get(request.getEmail());
+        if (otpEntry == null) {
+            throw new BadRequestException("Vui lòng yêu cầu OTP trước");
+        }
+        if (!otpEntry.otp.equals(request.getOtp())) {
+            throw new BadRequestException("OTP không chính xác");
+        }
+        if (!otpEntry.isValid()) {
+            otpStore.remove(request.getEmail());
+            throw new BadRequestException("OTP đã hết hạn. Vui lòng yêu cầu lại");
+        }
+
+        // Cập nhật mật khẩu mới
+        User user = userOpt.get();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        // Xóa OTP đã dùng
+        otpStore.remove(request.getEmail());
+
+        return buildAuthResponse(user);
     }
 
     private AuthResponse buildAuthResponse(User user) {

@@ -182,6 +182,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+
   Future<String?> requestPasswordReset({required String email}) async {
     _beginSubmit();
 

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_routes.dart';
 import '../../models/product.dart';
 import '../../providers/auth_provider.dart';
 import '../../repositories/product_repository.dart';
 import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
-import '../product/product_detail_screen.dart';
 import '../../widgets/screen_header.dart';
 
 class MyListingsScreen extends StatefulWidget {
@@ -73,10 +73,9 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   }
 
   void _openProductDetail(String productId) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ProductDetailScreen(productId: productId),
-      ),
+    Navigator.of(context).pushNamed(
+      AppRoutes.productDetail,
+      arguments: {AppRoutes.productIdArg: productId},
     );
   }
 

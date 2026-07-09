@@ -1,7 +1,13 @@
 import 'package:flutter/foundation.dart';
 
-/// Cấu hình URL backend Spring Boot (`market-place-app`).
 class ApiConfig {
+  static const String _host = String.fromEnvironment(
+    'API_HOST',
+    defaultValue: '10.0.2.2',
+  );
+
+  static String get _apiOrigin => 'http://$_host:8080';
+
   static String get baseUrl {
     if (kIsWeb) {
       return 'http://localhost:8080/api';
@@ -9,13 +15,12 @@ class ApiConfig {
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return 'http://10.0.2.2:8080/api';
+        return '$_apiOrigin/api';
       default:
         return 'http://localhost:8080/api';
     }
   }
 
-  /// Gợi ý khi Flutter Web không gọi được API (CORS trình duyệt).
   static String get webConnectionHint =>
       'Chạy trên Windows: flutter run -d windows\n'
       'Hoặc Chrome dev: flutter run -d chrome '
@@ -24,6 +29,9 @@ class ApiConfig {
 
   static const String loginEndpoint = '/auth/login';
   static const String registerEndpoint = '/auth/register';
+  static const String googleLoginEndpoint = '/auth/google';
+  static const String forgotPasswordEndpoint = '/auth/forgot-password';
+  static const String resetPasswordEndpoint = '/auth/reset-password';
   static const String logoutEndpoint = '/auth/logout';
   static const String sendRegisterOtpEndpoint = '/auth/send-register-otp';
   static const String verifyRegisterOtpEndpoint = '/auth/verify-register-otp';
@@ -37,11 +45,12 @@ class ApiConfig {
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return 'http://10.0.2.2:8080';
+        return _apiOrigin;
       default:
         return 'http://localhost:8080';
     }
   }
+
   static String productDetailEndpoint(String productId) => '/products/$productId';
   static const String cartAddEndpoint = '/cart/add';
   static const String cartEndpoint = '/cart';
@@ -51,6 +60,16 @@ class ApiConfig {
   static const String ordersEndpoint = '/orders';
   static const String sellerOrdersEndpoint = '/orders/seller/list';
   static String orderDetailEndpoint(String orderId) => '/orders/$orderId';
+  static String paymentInfoEndpoint(String orderId) => '/payments/$orderId/info';
+  static String paymentQrEndpoint(String orderId) => '/payments/$orderId/qr';
+  static String paymentConfirmTransferEndpoint(String orderId) =>
+      '/payments/$orderId/confirm-transfer';
+  static String paymentSellerConfirmEndpoint(String orderId) =>
+      '/payments/$orderId/seller-confirm';
+  static String paymentTransactionEndpoint(String orderId) =>
+      '/payments/$orderId/transaction';
+  static String paymentQrCancelEndpoint(String orderId) =>
+      '/payments/$orderId/qr/cancel';
   static String orderAcceptEndpoint(String orderId) => '/orders/$orderId/accept';
   static String orderCancelEndpoint(String orderId) => '/orders/$orderId/cancel';
   static String orderCompleteEndpoint(String orderId) => '/orders/$orderId/complete';
@@ -65,6 +84,5 @@ class ApiConfig {
   static String notificationReadEndpoint(String notificationId) =>
       '/notifications/$notificationId/read';
 
-  /// ID sản phẩm mẫu trong `TEST_CASES.md` — dùng fallback khi BE chưa có GET /products.
   static const List<String> devProductIds = ['prod-1', 'prod-2', 'prod-3'];
 }
