@@ -60,11 +60,13 @@ public class PaymentController {
 
     @GetMapping("/{orderId}/qr")
     public ResponseEntity<?> getPaymentQr(@RequestHeader("X-User-Id") String userId,
-                                           @PathVariable String orderId) {
+                                           @PathVariable String orderId,
+                                           jakarta.servlet.http.HttpServletRequest request) {
         try {
             User user = new User();
             user.setId(userId);
-            PaymentQrResponse qrResponse = paymentService.generatePaymentQr(orderId, user);
+            String ipAddress = market.campus.com.config.VnpayConfig.getIpAddress(request);
+            PaymentQrResponse qrResponse = paymentService.generatePaymentQr(orderId, user, ipAddress);
             return ResponseEntity.ok(qrResponse);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
@@ -106,13 +108,15 @@ public class PaymentController {
      */
     @PostMapping("/{orderId}/confirm-transfer")
     public ResponseEntity<?> confirmTransfer(@RequestHeader("X-User-Id") String userId,
-                                              @PathVariable String orderId) {
+                                              @PathVariable String orderId,
+                                              jakarta.servlet.http.HttpServletRequest request) {
         try {
             User user = new User();
             user.setId(userId);
             
+            String ipAddress = market.campus.com.config.VnpayConfig.getIpAddress(request);
             // Trước tiên kiểm tra user có phải buyer không
-            PaymentQrResponse qrCheck = paymentService.generatePaymentQr(orderId, user);
+            PaymentQrResponse qrCheck = paymentService.generatePaymentQr(orderId, user, ipAddress);
             
             // Gọi webhook với thông tin từ QR
             String refCode = qrCheck.getReferenceCode();
@@ -123,6 +127,31 @@ public class PaymentController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
+    }
+
+    // ==================== BƯỚC 2.5: VNPAY IPN & RETURN ====================
+
+    @GetMapping("/vnpay/ipn")
+    public ResponseEntity<?> vnpayIpn(@RequestParam Map<String, String> allParams) {
+        try {
+            String result = paymentService.processVnpayIpn(allParams);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.ok("{\"RspCode\":\"99\",\"Message\":\"Unknown error\"}");
+        }
+    }
+
+    @GetMapping("/vnpay/return")
+    public ResponseEntity<?> vnpayReturn(@RequestParam Map<String, String> allParams) {
+        // Redirect to deep-link to open the Flutter app
+        String responseCode = allParams.get("vnp_ResponseCode");
+        String txnRef = allParams.get("vnp_TxnRef");
+        // Deep link format (can be customized)
+        String deepLink = "marketcampus://payment-result?txnRef=" + txnRef + "&responseCode=" + responseCode;
+        
+        return ResponseEntity.status(org.springframework.http.HttpStatus.FOUND)
+                .header(org.springframework.http.HttpHeaders.LOCATION, deepLink)
+                .build();
     }
 
     // ==================== BƯỚC 3: KIỂM TRA GIAO DỊCH ====================

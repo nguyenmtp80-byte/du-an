@@ -9,13 +9,14 @@ public class PaymentQrResponse {
     private String content;
     private String referenceCode; // Mã tham chiếu để đối soát
     private String qrDataUrl;     // Base64 encoded QR image
+    private String paymentUrl;    // VNPay checkout URL
     private String status;
 
     public PaymentQrResponse() {}
 
     public PaymentQrResponse(String orderId, int amount, String bankCode, String bankAccountNumber,
                              String bankAccountName, String content, String referenceCode,
-                             String qrDataUrl, String status) {
+                             String qrDataUrl, String paymentUrl, String status) {
         this.orderId = orderId;
         this.amount = amount;
         this.bankCode = bankCode;
@@ -24,6 +25,7 @@ public class PaymentQrResponse {
         this.content = content;
         this.referenceCode = referenceCode;
         this.qrDataUrl = qrDataUrl;
+        this.paymentUrl = paymentUrl;
         this.status = status;
     }
 
@@ -53,4 +55,7 @@ public class PaymentQrResponse {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getPaymentUrl() { return paymentUrl; }
+    public void setPaymentUrl(String paymentUrl) { this.paymentUrl = paymentUrl; }
 }

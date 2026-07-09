@@ -42,6 +42,9 @@ public class PaymentService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
+    @Autowired
+    private VnpayService vnpayService;
+
     // === LƯU TRỮ GIAO DỊCH (In-memory, khi deploy thật thì dùng DB) ===
     // key = referenceCode (VD: MARKET-abc12345), value = TransactionRecord
     private final Map<String, TransactionRecord> transactionStore = new ConcurrentHashMap<>();
@@ -84,7 +87,7 @@ public class PaymentService {
      * Đồng thời tạo bản ghi giao dịch để chờ xác nhận.
      */
     @Transactional
-    public PaymentQrResponse generatePaymentQr(String orderId, User user) {
+    public PaymentQrResponse generatePaymentQr(String orderId, User user, String ipAddress) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn hàng không tồn tại"));
 
@@ -105,6 +108,8 @@ public class PaymentService {
         String qrContent = qrCodeService.generateVietQrContent(orderId, amount);
         String qrImageBase64 = qrCodeService.generateQrCodeBase64(qrContent, 400, 400);
         String transferContent = "TT " + refCode;
+        
+        String paymentUrl = vnpayService.createPaymentUrl(orderId, amount, ipAddress);
 
         // Tạo bản ghi giao dịch
         String transactionId = UUID.randomUUID().toString();
@@ -118,7 +123,7 @@ public class PaymentService {
                 order.getId(), amount,
                 qrCodeService.getBankCode(), qrCodeService.getBankAccountNumber(),
                 qrCodeService.getBankAccountName(), transferContent, refCode,
-                qrImageBase64, order.getStatus().toString()
+                qrImageBase64, paymentUrl, order.getStatus().toString()
         );
     }
 
@@ -179,18 +184,42 @@ public class PaymentService {
             notificationService.createNotification(
                     order.getSeller(),
                     "Đã nhận được thanh toán",
-                    "Đơn hàng " + record.orderId + " đã được thanh toán qua QR. Số tiền: " + amount + " VND.",
+                    "Đơn hàng " + record.orderId + " đã được thanh toán qua VNPay. Số tiền: " + amount + " VND.",
                     "order_status", order.getId()
             );
             notificationService.createNotification(
                     order.getBuyer(),
-                    "Thanh toán QR thành công",
+                    "Thanh toán VNPay thành công",
                     "Hệ thống đã nhận được thanh toán " + amount + " VND cho đơn hàng " + record.orderId + ".",
                     "order_status", order.getId()
             );
         }
 
         return mapToTransactionResponse(record);
+    }
+    
+    @Transactional
+    public String processVnpayIpn(Map<String, String> params) {
+        if (vnpayService.verifyIpnSignature(params)) {
+            if ("00".equals(params.get("vnp_ResponseCode"))) {
+                String vnp_TxnRef = params.get("vnp_TxnRef");
+                String vnp_Amount = params.get("vnp_Amount");
+                String vnp_TransactionNo = params.get("vnp_TransactionNo");
+                
+                int amount = Integer.parseInt(vnp_Amount) / 100;
+                
+                try {
+                    processBankWebhook(vnp_TxnRef, amount, vnp_TransactionNo);
+                    return "{\"RspCode\":\"00\",\"Message\":\"Confirm Success\"}";
+                } catch (Exception e) {
+                    return "{\"RspCode\":\"99\",\"Message\":\"" + e.getMessage() + "\"}";
+                }
+            } else {
+                return "{\"RspCode\":\"24\",\"Message\":\"Transaction Failed\"}";
+            }
+        } else {
+            return "{\"RspCode\":\"97\",\"Message\":\"Invalid Signature\"}";
+        }
     }
 
     // ==================== BƯỚC 3: KIỂM TRA GIAO DỊCH ====================
