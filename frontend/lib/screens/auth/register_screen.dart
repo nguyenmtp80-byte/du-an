@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/google_sign_in_helper.dart';
+import '../../utils/otp_register_helper.dart';
 import '../../utils/validators.dart';
 import '../../widgets/auth_divider.dart';
 import '../../widgets/auth_hero_header.dart';
@@ -45,13 +47,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    final email = _emailController.text;
+    final fullName = _fullNameController.text;
+    final phone = _phoneController.text;
+    final studentId = _studentIdController.text;
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    // Bước 1: Gửi OTP xác thực email
+    final otpVerified = await showOtpVerificationDialog(
+      context,
+      email: email,
+      fullName: fullName,
+      phone: phone,
+      studentId: studentId,
+      password: password,
+      confirmPassword: confirmPassword,
+    );
+
+    if (!mounted) return;
+
+    if (!otpVerified) {
+      return;
+    }
+
+    // Bước 2: Sau khi OTP verified, tiến hành đăng ký
     final success = await auth.register(
-      fullName: _fullNameController.text,
-      email: _emailController.text,
-      phone: _phoneController.text,
-      password: _passwordController.text,
-      confirmPassword: _confirmPasswordController.text,
-      studentId: _studentIdController.text,
+      fullName: fullName,
+      email: email,
+      phone: phone,
+      password: password,
+      confirmPassword: confirmPassword,
+      studentId: studentId,
     );
 
     if (!mounted) {
@@ -70,12 +97,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _showGoogleComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đăng ký Google sẽ được tích hợp sau.'),
-      ),
-    );
+  Future<void> _handleGoogleSignIn() async {
+    await handleGoogleSignIn(context);
+    if (!mounted) {
+      return;
+    }
+
+    final auth = context.read<AuthProvider>();
+    if (auth.isAuthenticated) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
   }
 
   @override
@@ -172,7 +203,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 16),
                     const AuthDivider(),
                     const SizedBox(height: 16),
-                    GoogleSignInButton(onPressed: _showGoogleComingSoon),
+                    GoogleSignInButton(
+                      isLoading: auth.isLoading,
+                      onPressed: _handleGoogleSignIn,
+                    ),
                     const SizedBox(height: 32),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,

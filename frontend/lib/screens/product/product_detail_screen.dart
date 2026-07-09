@@ -287,7 +287,7 @@ class _ImageHeader extends StatelessWidget {
                 return Image.network(
                   images[index].imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     color: AppColors.gray200,
                     child: const Icon(Icons.broken_image_outlined),
                   ),
