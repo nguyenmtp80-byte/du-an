@@ -7,14 +7,12 @@ import '../models/auth_response.dart';
 import '../models/user.dart';
 import '../services/auth_api_service.dart';
 
-/// Repository auth: gọi API Spring Boot và lưu session cục bộ.
 class AuthRepository {
   AuthRepository({
     AuthApiService? authApiService,
-    SharedPreferences? prefs,
+    this._prefs,
     Uuid? uuid,
   })  : _authApiService = authApiService ?? AuthApiService(),
-        _prefs = prefs,
         _uuid = uuid ?? const Uuid();
 
   final AuthApiService _authApiService;
@@ -75,11 +73,48 @@ class AuthRepository {
       try {
         await _authApiService.logout(token: token);
       } catch (_) {
-        // Vẫn xóa session local nếu server không phản hồi.
       }
     }
 
     await _clearSession();
+  }
+
+  Future<AuthResponse> googleLogin({required String idToken}) async {
+    final response = await _authApiService.googleLogin(idToken: idToken);
+    await _saveSession(response);
+    return response;
+  }
+
+  Future<String> sendRegisterOtp({required String email}) {
+    return _authApiService.sendRegisterOtp(email: email);
+  }
+
+  Future<String> verifyRegisterOtp({
+    required String email,
+    required String otp,
+  }) {
+    return _authApiService.verifyRegisterOtp(email: email, otp: otp);
+  }
+
+  Future<String> forgotPassword({required String email}) {
+    return _authApiService.forgotPassword(email: email);
+  }
+
+  Future<AuthResponse> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await _authApiService.resetPassword(
+      email: email,
+      otp: otp,
+      newPassword: newPassword,
+      confirmPassword: confirmPassword,
+    );
+
+    await _saveSession(response);
+    return response;
   }
 
   Future<User?> getStoredUser() async {
@@ -111,7 +146,6 @@ class AuthRepository {
       return storedUser.id;
     }
 
-    // Backend ưu tiên tìm theo id, nếu không có sẽ fallback sang email.
     return email;
   }
 

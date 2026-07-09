@@ -25,6 +25,8 @@ class ApiConfig {
   static const String loginEndpoint = '/auth/login';
   static const String registerEndpoint = '/auth/register';
   static const String logoutEndpoint = '/auth/logout';
+  static const String sendRegisterOtpEndpoint = '/auth/send-register-otp';
+  static const String verifyRegisterOtpEndpoint = '/auth/verify-register-otp';
 
   static const String productsEndpoint = '/products';
   static const String uploadImagesEndpoint = '/upload/images';
