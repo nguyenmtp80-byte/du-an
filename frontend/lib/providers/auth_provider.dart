@@ -142,6 +142,47 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<String?> sendRegisterOtp({required String email}) async {
+    _beginSubmit();
+
+    try {
+      final message = await _authRepository.sendRegisterOtp(email: email);
+      _errorMessage = null;
+      _endSubmit();
+      return message;
+    } on ApiException catch (error) {
+      _handleSubmitError(error.message);
+      return null;
+    } catch (_) {
+      _handleSubmitError('Không thể gửi OTP. Vui lòng thử lại.');
+      return null;
+    }
+  }
+
+  Future<String?> verifyRegisterOtp({
+    required String email,
+    required String otp,
+  }) async {
+    _beginSubmit();
+
+    try {
+      final message = await _authRepository.verifyRegisterOtp(
+        email: email,
+        otp: otp,
+      );
+      _errorMessage = null;
+      _endSubmit();
+      return message;
+    } on ApiException catch (error) {
+      _handleSubmitError(error.message);
+      return null;
+    } catch (_) {
+      _handleSubmitError('Xác thực OTP thất bại. Vui lòng thử lại.');
+      return null;
+    }
+  }
+
+
   Future<String?> requestPasswordReset({required String email}) async {
     _beginSubmit();
 

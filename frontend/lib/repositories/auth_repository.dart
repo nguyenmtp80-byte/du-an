@@ -10,10 +10,9 @@ import '../services/auth_api_service.dart';
 class AuthRepository {
   AuthRepository({
     AuthApiService? authApiService,
-    SharedPreferences? prefs,
+    this._prefs,
     Uuid? uuid,
   })  : _authApiService = authApiService ?? AuthApiService(),
-        _prefs = prefs,
         _uuid = uuid ?? const Uuid();
 
   final AuthApiService _authApiService;
@@ -73,6 +72,8 @@ class AuthRepository {
     if (token != null && token.isNotEmpty) {
       try {
         await _authApiService.logout(token: token);
+      } catch (_) {
+      }
       } catch (_) {}
     }
 
@@ -84,6 +85,18 @@ class AuthRepository {
     await _saveSession(response);
     return response;
   }
+
+  Future<String> sendRegisterOtp({required String email}) {
+    return _authApiService.sendRegisterOtp(email: email);
+  }
+
+  Future<String> verifyRegisterOtp({
+    required String email,
+    required String otp,
+  }) {
+    return _authApiService.verifyRegisterOtp(email: email, otp: otp);
+  }
+
 
   Future<String> forgotPassword({required String email}) {
     return _authApiService.forgotPassword(email: email);

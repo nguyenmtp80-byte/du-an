@@ -2,25 +2,17 @@ package market.campus.com.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-public class LoginRequest {
-
-    private String id;
+public class VerifyRegisterOtpRequest {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    private String password;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
+    @NotBlank(message = "OTP is required")
+    @Size(min = 6, max = 6, message = "OTP must be 6 digits")
+    private String otp;
 
     public String getEmail() {
         return email;
@@ -30,11 +22,11 @@ public class LoginRequest {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
+    public String getOtp() {
+        return otp;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setOtp(String otp) {
+        this.otp = otp;
     }
 }

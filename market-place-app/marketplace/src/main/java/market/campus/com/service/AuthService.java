@@ -6,6 +6,9 @@ import market.campus.com.dto.GoogleLoginRequest;
 import market.campus.com.dto.LoginRequest;
 import market.campus.com.dto.RegisterRequest;
 import market.campus.com.dto.ResetPasswordRequest;
+import market.campus.com.dto.SendOtpRequest;
+import market.campus.com.dto.VerifyRegisterOtpRequest;
+import market.campus.com.dto.ResetPasswordRequest;
 
 public interface AuthService {
 
@@ -20,4 +23,8 @@ public interface AuthService {
     String forgotPassword(ForgotPasswordRequest request);
 
     AuthResponse resetPassword(ResetPasswordRequest request);
+
+    String sendRegisterOtp(SendOtpRequest request);
+
+    String verifyRegisterOtp(VerifyRegisterOtpRequest request);
 }

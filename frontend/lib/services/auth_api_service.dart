@@ -70,6 +70,32 @@ class AuthApiService {
     return AuthResponse.fromJson(data);
   }
 
+
+  Future<String> sendRegisterOtp({required String email}) async {
+    final data = await _apiClient.post(
+      ApiConfig.sendRegisterOtpEndpoint,
+      body: {'email': email.trim()},
+    );
+
+    return data['message'] as String? ?? 'Mã OTP đã được gửi đến email của bạn';
+  }
+
+  Future<String> verifyRegisterOtp({
+    required String email,
+    required String otp,
+  }) async {
+    final data = await _apiClient.post(
+      ApiConfig.verifyRegisterOtpEndpoint,
+      body: {
+        'email': email.trim(),
+        'otp': otp.trim(),
+      },
+    );
+
+    return data['message'] as String? ?? 'Xác thực email thành công';
+  }
+
+
   Future<String> forgotPassword({required String email}) async {
     final data = await _apiClient.post(
       ApiConfig.forgotPasswordEndpoint,
@@ -103,3 +129,5 @@ class AuthApiService {
     return AuthResponse.fromJson(data);
   }
 }
+}
+

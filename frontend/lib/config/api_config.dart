@@ -33,6 +33,8 @@ class ApiConfig {
   static const String forgotPasswordEndpoint = '/auth/forgot-password';
   static const String resetPasswordEndpoint = '/auth/reset-password';
   static const String logoutEndpoint = '/auth/logout';
+  static const String sendRegisterOtpEndpoint = '/auth/send-register-otp';
+  static const String verifyRegisterOtpEndpoint = '/auth/verify-register-otp';
 
   static const String productsEndpoint = '/products';
   static const String uploadImagesEndpoint = '/upload/images';

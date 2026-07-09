@@ -7,6 +7,9 @@ import market.campus.com.dto.GoogleLoginRequest;
 import market.campus.com.dto.LoginRequest;
 import market.campus.com.dto.RegisterRequest;
 import market.campus.com.dto.ResetPasswordRequest;
+import market.campus.com.dto.SendOtpRequest;
+import market.campus.com.dto.VerifyRegisterOtpRequest;
+import market.campus.com.dto.ResetPasswordRequest;
 import market.campus.com.service.AuthService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -60,6 +63,26 @@ public class AuthController {
         try {
             AuthResponse response = authService.resetPassword(request);
             return ResponseEntity.ok(new SuccessResponse("Đặt lại mật khẩu thành công", response));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/send-register-otp")
+    public ResponseEntity<?> sendRegisterOtp(@Valid @RequestBody SendOtpRequest request) {
+        try {
+            String message = authService.sendRegisterOtp(request);
+            return ResponseEntity.ok(new MessageResponse(message));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/verify-register-otp")
+    public ResponseEntity<?> verifyRegisterOtp(@Valid @RequestBody VerifyRegisterOtpRequest request) {
+        try {
+            String message = authService.verifyRegisterOtp(request);
+            return ResponseEntity.ok(new MessageResponse(message));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
