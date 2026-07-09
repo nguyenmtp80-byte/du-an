@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:student_marketplace/repositories/auth_repository.dart'
+    as _authApiService;
 import 'package:uuid/uuid.dart';
 
 import '../models/auth_response.dart';
@@ -8,12 +10,9 @@ import '../models/user.dart';
 import '../services/auth_api_service.dart';
 
 class AuthRepository {
-  AuthRepository({
-    AuthApiService? authApiService,
-    this._prefs,
-    Uuid? uuid,
-  })  : _authApiService = authApiService ?? AuthApiService(),
-        _uuid = uuid ?? const Uuid();
+  AuthRepository({AuthApiService? authApiService, this._prefs, Uuid? uuid})
+    : _authApiService = authApiService ?? AuthApiService(),
+      _uuid = uuid ?? const Uuid();
 
   final AuthApiService _authApiService;
   final Uuid _uuid;
@@ -72,8 +71,6 @@ class AuthRepository {
     if (token != null && token.isNotEmpty) {
       try {
         await _authApiService.logout(token: token);
-      } catch (_) {
-      }
       } catch (_) {}
     }
 
@@ -96,7 +93,6 @@ class AuthRepository {
   }) {
     return _authApiService.verifyRegisterOtp(email: email, otp: otp);
   }
-
 
   Future<String> forgotPassword({required String email}) {
     return _authApiService.forgotPassword(email: email);

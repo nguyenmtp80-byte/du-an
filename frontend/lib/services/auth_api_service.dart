@@ -3,7 +3,8 @@ import '../models/auth_response.dart';
 import 'api_client.dart';
 
 class AuthApiService {
-  AuthApiService({ApiClient? apiClient}) : _apiClient = apiClient ?? ApiClient();
+  AuthApiService({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
 
@@ -14,11 +15,7 @@ class AuthApiService {
   }) async {
     final data = await _apiClient.post(
       ApiConfig.loginEndpoint,
-      body: {
-        'id': id,
-        'email': email.trim(),
-        'password': password,
-      },
+      body: {'id': id, 'email': email.trim(), 'password': password},
     );
 
     return AuthResponse.fromJson(data);
@@ -55,10 +52,7 @@ class AuthApiService {
   }
 
   Future<void> logout({required String token}) async {
-    await _apiClient.post(
-      ApiConfig.logoutEndpoint,
-      token: token,
-    );
+    await _apiClient.post(ApiConfig.logoutEndpoint, token: token);
   }
 
   Future<AuthResponse> googleLogin({required String idToken}) async {
@@ -69,7 +63,6 @@ class AuthApiService {
 
     return AuthResponse.fromJson(data);
   }
-
 
   Future<String> sendRegisterOtp({required String email}) async {
     final data = await _apiClient.post(
@@ -86,15 +79,11 @@ class AuthApiService {
   }) async {
     final data = await _apiClient.post(
       ApiConfig.verifyRegisterOtpEndpoint,
-      body: {
-        'email': email.trim(),
-        'otp': otp.trim(),
-      },
+      body: {'email': email.trim(), 'otp': otp.trim()},
     );
 
     return data['message'] as String? ?? 'Xác thực email thành công';
   }
-
 
   Future<String> forgotPassword({required String email}) async {
     final data = await _apiClient.post(
@@ -129,5 +118,3 @@ class AuthApiService {
     return AuthResponse.fromJson(data);
   }
 }
-}
-
