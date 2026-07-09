@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -36,10 +37,64 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
   bool _paymentFinished = false;
   String? _error;
 
+  // ── Polling ──────────────────────────────────────────────
+  Timer? _pollingTimer;
+  static const _pollingInterval = Duration(seconds: 5);
+  // ─────────────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadPaymentData());
+  }
+
+  @override
+  void dispose() {
+    _stopPolling();
+    super.dispose();
+  }
+
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(_pollingInterval, (_) => _pollPaymentStatus());
+  }
+
+  void _stopPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+  }
+
+  Future<void> _pollPaymentStatus() async {
+    // Không poll khi đang xử lý hay đã xong
+    if (_paymentFinished || _isSubmitting || !mounted) return;
+
+    final userId = context.read<AuthProvider>().user?.id;
+    if (userId == null || userId.isEmpty) return;
+
+    try {
+      final result = await _paymentApiService.checkTransaction(
+        userId: userId,
+        orderId: widget.orderId,
+      );
+
+      if (!mounted || _paymentFinished) return;
+
+      final status = result['status'] as String? ?? '';
+
+      if (status == 'SUCCESS') {
+        _stopPolling();
+        await _showSuccessAndExit(
+          title: 'Thanh toán thành công!',
+          message: 'Hệ thống đã nhận được tiền. Người bán sẽ xác nhận và chuẩn bị hàng.',
+        );
+      } else if (status == 'FAILED') {
+        _stopPolling();
+        if (mounted) _showMessage('Giao dịch thất bại. Vui lòng thử lại.');
+      }
+      // PENDING → tiếp tục poll
+    } catch (_) {
+      // Lỗi mạng → bỏ qua, poll lần sau
+    }
   }
 
   Future<void> _loadPaymentData() async {
@@ -78,6 +133,9 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
         _paymentInfo = results[1] as PaymentInfo;
         _isLoading = false;
       });
+
+      // Bắt đầu polling sau khi load xong QR
+      _startPolling();
     } on ApiException catch (error) {
       if (!mounted) {
         return;
@@ -510,9 +568,23 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Mã đơn: ${widget.orderId}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.gray500),
+                GestureDetector(
+                  onTap: () => _copyText(widget.orderId, 'mã đơn hàng'),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Mã đơn: ${widget.orderId}',
+                        style: const TextStyle(fontSize: 12, color: AppColors.gray500),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.copy,
+                        size: 13,
+                        color: AppColors.gray400,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

@@ -61,4 +61,16 @@ class PaymentApiService {
       extraHeaders: {'X-User-Id': userId},
     );
   }
+
+  /// Kiểm tra trạng thái giao dịch — dùng cho polling
+  /// Trả về map có field "status": "PENDING" | "SUCCESS" | "FAILED"
+  Future<Map<String, dynamic>> checkTransaction({
+    required String userId,
+    required String orderId,
+  }) {
+    return _apiClient.get(
+      ApiConfig.paymentTransactionEndpoint(orderId),
+      extraHeaders: {'X-User-Id': userId},
+    );
+  }
 }
