@@ -9,16 +9,8 @@ class ApiConfig {
   static String get _apiOrigin => 'http://$_host:8080';
 
   static String get baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:8080/api';
-    }
-
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return '$_apiOrigin/api';
-      default:
-        return 'http://localhost:8080/api';
-    }
+    // Production: use Railway backend
+    return 'https://marketplace-production-5909.up.railway.app/api';
   }
 
   static String get webConnectionHint =>
@@ -39,16 +31,8 @@ class ApiConfig {
   static const String productsEndpoint = '/products';
   static const String uploadImagesEndpoint = '/upload/images';
   static String get baseUploadUrl {
-    if (kIsWeb) {
-      return 'http://localhost:8080';
-    }
-
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return _apiOrigin;
-      default:
-        return 'http://localhost:8080';
-    }
+    // Production: use Railway backend
+    return 'https://marketplace-production-5909.up.railway.app';
   }
 
   static String productDetailEndpoint(String productId) => '/products/$productId';
