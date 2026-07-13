@@ -27,8 +27,8 @@ class AppTheme {
       useMaterial3: true,
       fontFamily: _primaryFont,
       fontFamilyFallback: const [
-        'Noto Sans',
         'Noto Sans Vietnamese',
+        'Noto Sans',
         'Roboto',
         'Arial',
         'sans-serif',
