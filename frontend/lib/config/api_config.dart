@@ -1,17 +1,8 @@
-import 'package:flutter/foundation.dart';
-
 class ApiConfig {
-  static const String _host = String.fromEnvironment(
-    'API_HOST',
-    defaultValue: '10.0.2.2',
-  );
+  static const String _productionOrigin =
+      'https://marketplace-production-5909.up.railway.app';
 
-  static String get _apiOrigin => 'http://$_host:8080';
-
-  static String get baseUrl {
-    // Production: use Railway backend
-    return 'https://marketplace-production-5909.up.railway.app/api';
-  }
+  static String get baseUrl => '$_productionOrigin/api';
 
   static String get webConnectionHint =>
       'Chạy trên Windows: flutter run -d windows\n'
@@ -30,10 +21,7 @@ class ApiConfig {
 
   static const String productsEndpoint = '/products';
   static const String uploadImagesEndpoint = '/upload/images';
-  static String get baseUploadUrl {
-    // Production: use Railway backend
-    return 'https://marketplace-production-5909.up.railway.app';
-  }
+  static String get baseUploadUrl => _productionOrigin;
 
   static String productDetailEndpoint(String productId) => '/products/$productId';
   static const String cartAddEndpoint = '/cart/add';
