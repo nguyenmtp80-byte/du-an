@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   static const Color primary = Color(0xFFF97316);
@@ -15,15 +14,25 @@ class AppColors {
 }
 
 class AppTheme {
-  static ThemeData get light {
-    // Google Fonts: Be Vietnam Pro hỗ trợ tiếng Việt tốt, fallback Inter
-    final textTheme = GoogleFonts.beVietnamProTextTheme(
-      ThemeData.light().textTheme,
-    );
+  /// Font supports Vietnamese:
+  /// - Web: Be Vietnam Pro loaded via CDN in index.html
+  /// - Mobile: Noto Sans / Roboto (system fonts)
+  ///
+  /// fontFamilyFallback ensures Vietnamese characters display correctly
+  /// on all platforms even if the primary font doesn't load.
+  static const String _primaryFont = 'Be Vietnam Pro';
 
+  static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
-      textTheme: textTheme,
+      fontFamily: _primaryFont,
+      fontFamilyFallback: const [
+        'Noto Sans',
+        'Noto Sans Vietnamese',
+        'Roboto',
+        'Arial',
+        'sans-serif',
+      ],
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         primary: AppColors.primary,
