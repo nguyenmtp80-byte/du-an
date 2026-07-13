@@ -165,7 +165,7 @@ public class ProductService {
 
         return new ProductDetailResponse(
                 product.getId(),
-                product.getTitle(),
+                product.getTitle(),  // This maps Product.title -> DetailResponse.name via serialization
                 product.getDescription(),
                 product.getPrice(),
                 product.getCategory(),

@@ -6,7 +6,7 @@ import java.util.List;
 
 public class ProductDetailResponse {
     private String id;
-    private String title;
+    private String name;
     private String description;
     private BigDecimal price;
     private String category;
@@ -22,13 +22,13 @@ public class ProductDetailResponse {
 
     public ProductDetailResponse() {}
 
-    public ProductDetailResponse(String id, String title, String description, BigDecimal price,
+    public ProductDetailResponse(String id, String name, String description, BigDecimal price,
                                  String category, String condition, String status,
                                  Integer quantity, List<String> imageUrls, String locationName,
                                  Double latitude, Double longitude,
                                  SellerInfoResponse seller, LocalDateTime createdAt) {
         this.id = id;
-        this.title = title;
+        this.name = name;
         this.description = description;
         this.price = price;
         this.category = category;
@@ -47,8 +47,8 @@ public class ProductDetailResponse {
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

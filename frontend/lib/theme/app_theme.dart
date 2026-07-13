@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   static const Color primary = Color(0xFFF97316);
@@ -15,8 +16,14 @@ class AppColors {
 
 class AppTheme {
   static ThemeData get light {
+    // Google Fonts: Be Vietnam Pro hỗ trợ tiếng Việt tốt, fallback Inter
+    final textTheme = GoogleFonts.beVietnamProTextTheme(
+      ThemeData.light().textTheme,
+    );
+
     return ThemeData(
       useMaterial3: true,
+      textTheme: textTheme,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         primary: AppColors.primary,

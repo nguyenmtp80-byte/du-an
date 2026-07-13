@@ -111,7 +111,7 @@ class Product {
 
     return Product(
       id: json['id']?.toString() ?? '',
-      name: json['title'] as String? ?? json['name'] as String? ?? '',
+      name: json['name'] as String? ?? json['title'] as String? ?? '',
       description: json['description'] as String?,
       price: _parsePrice(json['price']),
       categoryName: json['category'] as String? ??
