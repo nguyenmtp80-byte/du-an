@@ -13,6 +13,14 @@ class ProductProvider extends ChangeNotifier {
 
   final ProductRepository _productRepository;
 
+  /// Chỉ hiển thị 4 danh mục mặc định từ BE (Dịch vụ, Sách giáo trình, Điện tử, Đồ dùng)
+  static const Set<String> allowedCategories = {
+    'Dịch vụ',
+    'Sách giáo trình',
+    'Điện tử',
+    'Đồ dùng',
+  };
+
   static const _favoritesKey = 'favorite_product_ids';
 
   List<Product> _products = [];
@@ -46,7 +54,7 @@ class ProductProvider extends ChangeNotifier {
   List<String> get categories {
     final names = _products
         .map((product) => product.categoryName.trim())
-        .where((name) => name.isNotEmpty)
+        .where((name) => name.isNotEmpty && allowedCategories.contains(name))
         .toSet()
         .toList()
       ..sort();
