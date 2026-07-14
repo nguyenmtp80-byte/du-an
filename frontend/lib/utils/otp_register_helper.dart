@@ -16,13 +16,9 @@ Future<bool> showOtpVerificationDialog(
   final otpController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   final auth = context.read<AuthProvider>();
-  bool sentOtp = false;
-  bool verified = false;
 
-  // Tự động gửi OTP khi mở dialog
   final message = await auth.sendRegisterOtp(email: email);
   if (!context.mounted) return false;
-  sentOtp = true;
 
   if (message == null) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -119,7 +115,6 @@ Future<bool> showOtpVerificationDialog(
                     if (!dialogContext.mounted) return;
 
                     if (otpMessage != null) {
-                      verified = true;
                       Navigator.of(dialogContext).pop(true);
                     } else {
                       ScaffoldMessenger.of(dialogContext).showSnackBar(

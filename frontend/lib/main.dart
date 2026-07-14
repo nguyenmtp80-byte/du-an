@@ -8,7 +8,7 @@ import 'providers/cart_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/product_provider.dart';
 import 'screens/auth/auth_gate.dart';
-import 'theme/app_theme.dart';
+import 'core/themes/app_theme.dart';
 
 void main() {
   runApp(const StudentMarketplaceApp());

@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../models/map_location.dart';
-import '../theme/app_theme.dart';
+import '../core/themes/app_theme.dart';
 import '../utils/map_constants.dart';
 
 class LocationMapSheet extends StatefulWidget {

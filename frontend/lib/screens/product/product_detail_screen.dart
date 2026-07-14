@@ -5,7 +5,7 @@ import '../../models/product.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/product_provider.dart';
-import '../../theme/app_theme.dart';
+import '../../core/themes/app_theme.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/location_map_sheet.dart';
 import '../cart/cart_screen.dart';

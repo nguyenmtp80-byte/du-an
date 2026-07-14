@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/constants/app_strings.dart';
-import '../theme/app_theme.dart';
+import '../core/themes/app_theme.dart';
 
 class GoogleSignInButton extends StatelessWidget {
   const GoogleSignInButton({

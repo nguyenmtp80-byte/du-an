@@ -6,7 +6,7 @@ import '../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/notification_provider.dart';
-import '../../theme/app_theme.dart';
+import '../../core/themes/app_theme.dart';
 import '../cart/cart_screen.dart';
 import '../chat/chat_history_screen.dart';
 import '../home/home_screen.dart';

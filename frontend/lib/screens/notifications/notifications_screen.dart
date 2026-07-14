@@ -7,7 +7,7 @@ import '../../providers/notification_provider.dart';
 import '../../services/api_client.dart';
 import '../../services/notification_api_service.dart';
 import '../../services/order_api_service.dart';
-import '../../theme/app_theme.dart';
+import '../../core/themes/app_theme.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/order_detail_sheet.dart';
 import '../../widgets/screen_header.dart';

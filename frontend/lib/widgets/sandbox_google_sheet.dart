@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
-import '../theme/app_theme.dart';
+import '../core/themes/app_theme.dart';
 import '../utils/validators.dart';
 import 'auth_text_field.dart';
 import 'primary_button.dart';

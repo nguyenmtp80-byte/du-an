@@ -9,7 +9,7 @@ import '../../models/payment_qr.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_client.dart';
 import '../../services/payment_api_service.dart';
-import '../../theme/app_theme.dart';
+import '../../core/themes/app_theme.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/screen_header.dart';
 
@@ -311,6 +311,8 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
       return true;
     }
 
+    final userId = context.read<AuthProvider>().user?.id;
+
     final action = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -346,7 +348,6 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
     }
 
     if (action == 'cancel') {
-      final userId = context.read<AuthProvider>().user?.id;
       if (userId == null || userId.isEmpty) {
         return true;
       }
@@ -417,7 +418,10 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
         }
 
         final shouldPop = await _handleExitAttempt();
-        if (shouldPop && mounted) {
+        if (!mounted) {
+          return;
+        }
+        if (shouldPop) {
           Navigator.of(context).pop();
         }
       },
@@ -429,7 +433,10 @@ class _PaymentQrScreenState extends State<PaymentQrScreen> {
               title: 'Thanh toán VietQR',
               onBack: () async {
                 final shouldPop = await _handleExitAttempt();
-                if (shouldPop && mounted) {
+                if (!mounted) {
+                  return;
+                }
+                if (shouldPop) {
                   Navigator.of(context).pop();
                 }
               },

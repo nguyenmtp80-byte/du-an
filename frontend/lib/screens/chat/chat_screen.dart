@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/chat.dart';
 import '../../services/api_client.dart';
 import '../../services/chat_api_service.dart';
-import '../../theme/app_theme.dart';
+import '../../core/themes/app_theme.dart';
 import '../../utils/formatters.dart';
 
 class ChatScreen extends StatefulWidget {

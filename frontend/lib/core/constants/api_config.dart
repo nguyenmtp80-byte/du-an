@@ -1,8 +1,11 @@
 class ApiConfig {
+  ApiConfig._();
+
   static const String _productionOrigin =
       'https://marketplace-production-5909.up.railway.app';
 
   static String get baseUrl => '$_productionOrigin/api';
+  static String get baseUploadUrl => _productionOrigin;
 
   static String get webConnectionHint =>
       'Chạy trên Windows: flutter run -d windows\n'
@@ -21,17 +24,21 @@ class ApiConfig {
 
   static const String productsEndpoint = '/products';
   static const String uploadImagesEndpoint = '/upload/images';
-  static String get baseUploadUrl => _productionOrigin;
-
   static String productDetailEndpoint(String productId) => '/products/$productId';
+
   static const String cartAddEndpoint = '/cart/add';
   static const String cartEndpoint = '/cart';
   static const String cartUpdateEndpoint = '/cart/update';
   static String cartDeleteEndpoint(String cartItemId) => '/cart/$cartItemId';
+
   static const String orderCreateEndpoint = '/orders/create';
   static const String ordersEndpoint = '/orders';
   static const String sellerOrdersEndpoint = '/orders/seller/list';
   static String orderDetailEndpoint(String orderId) => '/orders/$orderId';
+  static String orderAcceptEndpoint(String orderId) => '/orders/$orderId/accept';
+  static String orderCancelEndpoint(String orderId) => '/orders/$orderId/cancel';
+  static String orderCompleteEndpoint(String orderId) => '/orders/$orderId/complete';
+
   static String paymentInfoEndpoint(String orderId) => '/payments/$orderId/info';
   static String paymentQrEndpoint(String orderId) => '/payments/$orderId/qr';
   static String paymentConfirmTransferEndpoint(String orderId) =>
@@ -42,16 +49,15 @@ class ApiConfig {
       '/payments/$orderId/transaction';
   static String paymentQrCancelEndpoint(String orderId) =>
       '/payments/$orderId/qr/cancel';
-  static String orderAcceptEndpoint(String orderId) => '/orders/$orderId/accept';
-  static String orderCancelEndpoint(String orderId) => '/orders/$orderId/cancel';
-  static String orderCompleteEndpoint(String orderId) => '/orders/$orderId/complete';
 
   static const String chatRoomsEndpoint = '/chat/rooms';
-  static String chatRoomMessagesEndpoint(String roomId) => '/chat/rooms/$roomId/messages';
+  static String chatRoomMessagesEndpoint(String roomId) =>
+      '/chat/rooms/$roomId/messages';
   static String chatRoomReadEndpoint(String roomId) => '/chat/rooms/$roomId/read';
 
   static const String notificationsEndpoint = '/notifications';
-  static const String notificationsUnreadCountEndpoint = '/notifications/unread/count';
+  static const String notificationsUnreadCountEndpoint =
+      '/notifications/unread/count';
   static const String notificationsReadAllEndpoint = '/notifications/read-all';
   static String notificationReadEndpoint(String notificationId) =>
       '/notifications/$notificationId/read';

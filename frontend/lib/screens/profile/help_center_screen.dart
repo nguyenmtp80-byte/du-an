@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../theme/app_theme.dart';
+import '../../core/themes/app_theme.dart';
 import '../../widgets/screen_header.dart';
 
 const _supportEmail = 'hotro@studentmarketplace.vn';

@@ -1,8 +1,6 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:student_marketplace/repositories/auth_repository.dart'
-    as _authApiService;
 import 'package:uuid/uuid.dart';
 
 import '../models/auth_response.dart';

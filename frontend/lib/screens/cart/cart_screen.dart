@@ -5,7 +5,7 @@ import '../../core/constants/app_routes.dart';
 import '../../models/cart_item.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
-import '../../theme/app_theme.dart';
+import '../../core/themes/app_theme.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/screen_header.dart';
 

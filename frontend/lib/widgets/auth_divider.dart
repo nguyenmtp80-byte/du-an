@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_theme.dart';
+import '../core/themes/app_theme.dart';
 
 class AuthDivider extends StatelessWidget {
   const AuthDivider({super.key, this.label = 'Hoặc tiếp tục với'});

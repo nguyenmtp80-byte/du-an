@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/product.dart';
 import '../repositories/product_repository.dart';
 import '../services/api_client.dart';
-import '../config/api_config.dart';
+import '../core/constants/api_config.dart';
 import '../utils/formatters.dart';
 
 class ProductProvider extends ChangeNotifier {

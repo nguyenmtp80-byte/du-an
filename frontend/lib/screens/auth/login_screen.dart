@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_routes.dart';
 import '../../core/constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
-import '../../theme/app_theme.dart';
+import '../../core/themes/app_theme.dart';
 import '../../utils/google_sign_in_helper.dart';
 import '../../utils/validators.dart';
 import '../../widgets/auth_divider.dart';

@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
-import '../config/api_config.dart';
+import '../core/constants/api_config.dart';
 import '../models/product.dart';
 import '../services/api_client.dart';
 import '../services/product_api_service.dart';

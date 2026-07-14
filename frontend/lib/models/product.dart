@@ -1,4 +1,4 @@
-import '../config/api_config.dart';
+import '../core/constants/api_config.dart';
 
 class ProductImage {
   const ProductImage({
